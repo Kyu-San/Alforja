@@ -9,7 +9,7 @@ import { Checkbox, SearchField, Select, TextField } from "../components/ui/Form"
 import { useToast } from "../components/ui/Toast";
 import { message, splitDetail } from "../lib/errors";
 import { clock, qualityLabel } from "../lib/format";
-import { useStore } from "../store";
+import { focusDownload, useStore } from "../store";
 import {
   audioContainers,
   audioQualities,
@@ -17,6 +17,7 @@ import {
   defaultChoice,
   Destination,
   KindToggle,
+  ORIGINAL_AUDIO,
   QualityList,
   SubtitlePicker,
   toOptions,
@@ -152,8 +153,10 @@ function VideoDialog({ info, onOpenChange }: { info: MediaInfo; onOpenChange: (o
   const start = async () => {
     setBusy(true);
     try {
-      await api.startDownload(info.url, toOptions(c));
+      const d = await api.startDownload(info.url, toOptions(c));
+      useStore.getState().upsert(d);
       onOpenChange(false);
+      focusDownload(d.id);
     } catch (e) {
       toast({ kind: "error", title: "No se pudo empezar", body: message(e) });
     } finally {
@@ -193,7 +196,7 @@ function VideoDialog({ info, onOpenChange }: { info: MediaInfo; onOpenChange: (o
           ) : (
             <Select label="Formato" value={c.audioContainer} onChange={(v) => set({ audioContainer: v as Choice["audioContainer"] })} options={audioContainers} />
           )}
-          <Select label="Pista de audio" value={c.audioLang ?? ""} onChange={(v) => set({ audioLang: v || null })} options={audioTrackOptions(info.audioTracks)} disabled={info.audioTracks.length < 2} />
+          <Select label="Pista de audio" value={c.audioLang ?? ORIGINAL_AUDIO} onChange={(v) => set({ audioLang: v === ORIGINAL_AUDIO ? null : v })} options={audioTrackOptions(info.audioTracks)} disabled={info.audioTracks.length < 2} />
           <SubtitlePicker tracks={info.subtitles} value={c.subtitleLangs} onChange={(subtitleLangs) => set({ subtitleLangs })} />
         </div>
         <Destination value={c.outputDir} onChange={(outputDir) => set({ outputDir })} />
@@ -241,8 +244,10 @@ function PlaylistDialog({ info, onOpenChange }: { info: PlaylistInfo; onOpenChan
     setBusy(true);
     try {
       const ids = info.entries.filter((e) => selected.has(e.id)).map((e) => e.id);
-      await api.startPlaylistDownload(info.url, ids, toOptions(c));
+      const ds = await api.startPlaylistDownload(info.url, ids, toOptions(c));
+      ds.forEach(useStore.getState().upsert);
       onOpenChange(false);
+      if (ds[0]) focusDownload(ds[0].id);
       toast({ kind: "success", title: `${ids.length} ${ids.length === 1 ? "video" : "videos"} en la cola`, body: `Se guardan en la carpeta «${info.title}».` });
     } catch (e) {
       toast({ kind: "error", title: "No se pudo empezar", body: message(e) });

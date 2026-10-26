@@ -29,24 +29,26 @@ export function Dialog({
         <D.Overlay className="fixed inset-0 z-40 bg-scrim animate-[fade-in_var(--duration-base)_var(--ease-app)]" />
         <D.Content
           aria-busy={busy || undefined}
-          aria-describedby={description ? undefined : undefined}
+          // Sin descripción, Radix pide decirlo explícitamente.
+          {...(description ? {} : { "aria-describedby": undefined })}
+          onCloseAutoFocus={(e) => {
+            if (document.activeElement && document.activeElement !== document.body) e.preventDefault();
+          }}
           className={cn(
             "fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100vh-48px)] max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col",
             "rounded-lg bg-surface-raised shadow-pop outline-none animate-[dialog-in_var(--duration-base)_var(--ease-app)]",
             wide ? "w-dialog-wide" : "w-dialog",
           )}
         >
-          <div className="flex items-start gap-3 px-5 pt-4">
-            <div className="min-w-0 flex-1">
-              <D.Title className="m-0 text-lg">{title}</D.Title>
-              {description ? <D.Description className="mt-1 text-sm text-muted">{description}</D.Description> : <D.Description className="sr-only">{typeof title === "string" ? title : ""}</D.Description>}
-            </div>
-            <D.Close asChild>
-              <IconButton label="Cerrar" shortcut="Esc" size="sm" icon={<X className="size-4" />} />
-            </D.Close>
+          <div className="px-5 pr-14 pt-4">
+            <D.Title className="m-0 text-lg">{title}</D.Title>
+            {description ? <D.Description className="mt-1 text-sm text-muted">{description}</D.Description> : null}
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
           {footer ? <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3">{footer}</div> : null}
+          <D.Close asChild>
+            <IconButton label="Cerrar" shortcut="Esc" size="sm" icon={<X className="size-4" />} className="absolute right-4 top-3.5" />
+          </D.Close>
         </D.Content>
       </D.Portal>
     </D.Root>

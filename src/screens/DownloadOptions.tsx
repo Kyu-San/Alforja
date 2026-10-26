@@ -125,10 +125,12 @@ export function SubtitlePicker({ tracks, value, onChange }: { tracks: SubtitleTr
   );
 }
 
+export const ORIGINAL_AUDIO = "original";
+
 export function audioTrackOptions(tracks: AudioTrack[]): Option[] {
   const original = tracks.find((t) => t.isOriginal);
   return [
-    { value: "", label: original ? `Original (${language(original.lang)})` : "La del video" },
+    { value: ORIGINAL_AUDIO, label: original ? `Original (${language(original.lang)})` : "La del video" },
     ...tracks.filter((t) => t !== original).map((t) => ({ value: t.lang, label: language(t.lang) })),
   ];
 }

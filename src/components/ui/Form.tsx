@@ -24,9 +24,10 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string | null;
   hint?: string;
+  inputClassName?: string;
 }
 
-export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField({ label, error, hint, id, className, ...rest }, ref) {
+export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField({ label, error, hint, id, className, inputClassName, ...rest }, ref) {
   const auto = useId();
   const fid = id ?? auto;
   return (
@@ -35,7 +36,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
       <input
         ref={ref}
         id={fid}
-        className={fieldBase}
+        className={cn(fieldBase, inputClassName)}
         aria-invalid={!!error || undefined}
         aria-describedby={error ? `${fid}-err` : hint ? `${fid}-hint` : undefined}
         spellCheck={false}
