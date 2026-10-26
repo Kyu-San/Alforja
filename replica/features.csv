@@ -1,28 +1,28 @@
 feature,area,priority,original,clone,notes
-Pegar un enlace desde el portapapeles con un botón,descarga,must,yes,no,el gesto central de la app
-Analizar el enlace y listar formatos y calidades disponibles,descarga,must,yes,no,yt-dlp --dump-json
-Elegir calidad de video (360p a 4K/8K según la fuente),descarga,must,yes,no,>1080p en YouTube viene en pistas separadas: hace falta ffmpeg
-Elegir contenedor MP4 o MKV,descarga,must,yes,no,
-Extraer solo audio a MP3 / M4A / OGG,descarga,must,yes,no,yt-dlp -x con ffmpeg
-Elegir carpeta de destino,descarga,must,yes,no,
-Lista de descargas con progreso / velocidad / tiempo restante,cola,must,yes,no,parsear la salida de progreso de yt-dlp
-Pausar / reanudar / cancelar / reintentar una descarga,cola,must,yes,no,
-Abrir el archivo o mostrarlo en la carpeta,cola,must,yes,no,
-Mensajes de error claros (enlace no soportado / privado / bloqueado por región),cola,must,yes,no,
-Descargar una playlist completa,playlists,must,yes,no,
-Elegir qué videos de la playlist descargar,playlists,should,yes,no,
-Descargar un canal completo,playlists,should,yes,no,
-Subtítulos en SRT con elección de idioma,subtítulos,should,yes,no,
-Incrustar subtítulos en el video,subtítulos,could,yes,no,
-Pista de audio original o de otro idioma,descarga,should,yes,no,añadido en 25.1 / gratis desde 25.2
-Smart Mode: guardar preferencias y descargar con un clic,smart mode,should,yes,no,
-Suscribirse a un canal o playlist y bajar lo nuevo automáticamente,suscripciones,should,yes,no,
-Descargas simultáneas configurables,cola,should,yes,no,
-Preferencias: carpeta / idioma / descargas simultáneas / proxy,preferencias,should,yes,no,
-Actualizar yt-dlp desde la app,mantenimiento,should,no,no,no está en el original; aquí es necesario porque YouTube rompe los descargadores a menudo
-Usar tu propia sesión del navegador para tus playlists privadas o Ver más tarde,cuenta,could,yes,no,solo tu propia cuenta (yt-dlp --cookies-from-browser)
-Navegador integrado para buscar y descargar,navegador,could,yes,no,
-Otros sitios además de YouTube (Vimeo / TikTok / etc.),fuentes,could,yes,no,lo que soporte yt-dlp
+Pegar un enlace desde el portapapeles con un botón,descarga,must,yes,yes,"el gesto central de la app | botón y Ctrl/Cmd+V; si no hay enlace, abre un campo para escribirlo. Probado en la app real"
+Analizar el enlace y listar formatos y calidades disponibles,descarga,must,yes,yes,yt-dlp --dump-json | yt-dlp -J; probado en la app real con HLS local (720p/360p + audio aparte)
+Elegir calidad de video (360p a 4K/8K según la fuente),descarga,must,yes,yes,">1080p en YouTube viene en pistas separadas: hace falta ffmpeg | selector con caída; si no hay la pedida, lo dice en amarillo. Probado (pide 1080p, obtiene 720p)"
+Elegir contenedor MP4 o MKV,descarga,must,yes,yes,probado de punta a punta
+Extraer solo audio a MP3 / M4A / OGG,descarga,must,yes,yes,yt-dlp -x con ffmpeg | MP3 probado de punta a punta; M4A y OGG usan el mismo camino sin prueba propia
+Elegir carpeta de destino,descarga,must,yes,yes,diálogo nativo; las listas van a una subcarpeta con su nombre
+Lista de descargas con progreso / velocidad / tiempo restante,cola,must,yes,yes,parsear la salida de progreso de yt-dlp | eventos de progreso cada 250 ms; barra de estado con el total
+Pausar / reanudar / cancelar / reintentar una descarga,cola,must,yes,yes,"prueba de integración con descarga lenta: pausa a mitad, continúa el .part; cancelar borra temporales"
+Abrir el archivo o mostrarlo en la carpeta,cola,must,yes,partial,hecho con el plugin opener de Tauri; sin probar en un escritorio con gestor de archivos
+Mensajes de error claros (enlace no soportado / privado / bloqueado por región),cola,must,yes,yes,12 códigos traducidos; detalle técnico plegado
+Descargar una playlist completa,playlists,must,yes,yes,probado en la app real con un RSS local de 2 videos
+Elegir qué videos de la playlist descargar,playlists,should,yes,yes,"casillas, filtro, seleccionar todo; lista virtualizada para miles"
+Descargar un canal completo,playlists,should,yes,partial,la URL /videos de un canal funciona como lista; la raíz del canal (@nombre) devuelve pestañas y aún no se trata
+Subtítulos en SRT con elección de idioma,subtítulos,should,yes,partial,interfaz y argumentos hechos; sin prueba de punta a punta (no hay video local con subtítulos)
+Incrustar subtítulos en el video,subtítulos,could,yes,partial,--embed-subs; misma falta de prueba que los SRT
+Pista de audio original o de otro idioma,descarga,should,yes,partial,añadido en 25.1 / gratis desde 25.2 | selector ba[language^=xx] con caída; sin video local con varias pistas para probarlo
+Smart Mode: guardar preferencias y descargar con un clic,smart mode,should,yes,no,pantalla que explica que llega en la próxima versión
+Suscribirse a un canal o playlist y bajar lo nuevo automáticamente,suscripciones,should,yes,no,pantalla que explica que llega en la próxima versión
+Descargas simultáneas configurables,cola,should,yes,yes,1–10; prueba de integración del límite
+Preferencias: carpeta / idioma / descargas simultáneas / proxy,preferencias,should,yes,partial,"carpeta, simultáneas, plantilla de nombre, proxy y sesión del navegador; falta idioma de la interfaz"
+Actualizar yt-dlp desde la app,mantenimiento,should,no,no,no está en el original; aquí es necesario porque YouTube rompe los descargadores a menudo | Motor muestra versión y ruta; la actualización es lo siguiente
+Usar tu propia sesión del navegador para tus playlists privadas o Ver más tarde,cuenta,could,yes,partial,solo tu propia cuenta (yt-dlp --cookies-from-browser) | ajuste guardado y pasado a yt-dlp (--cookies-from-browser); sin probar con un perfil real
+Navegador integrado para buscar y descargar,navegador,could,yes,no,pantalla que lo explica
+Otros sitios además de YouTube (Vimeo / TikTok / etc.),fuentes,could,yes,partial,"lo que soporte yt-dlp | lo que soporte yt-dlp; probado solo con MP4, HLS y RSS locales (YouTube está bloqueado en este entorno)"
 Videos 360° / VR y 3D,descarga,could,yes,no,
 Exportar / importar la lista de descargas,cola,could,yes,no,
 Herramientas de audio con IA (quitar voces / reducir eco),audio IA,could,yes,skip,fuera del bucle principal; añadido en 2026
