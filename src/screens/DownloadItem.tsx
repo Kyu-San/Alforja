@@ -149,21 +149,6 @@ function Thumb({ d }: { d: Download }) {
   );
 }
 
-export function rowLabel(d: Download): string {
-  const pct = percent(d.downloadedBytes, d.sizeBytes);
-  const state = {
-    queued: "en cola",
-    parsing: "analizando",
-    downloading: pct != null ? `descargando, ${pct} %` : "descargando",
-    processing: "procesando",
-    paused: "en pausa",
-    done: "lista",
-    error: `error: ${d.errorMessage ? splitDetail(d.errorMessage)[0] : ""}`,
-    cancelled: "cancelada",
-  }[d.status];
-  return `${d.title ?? d.sourceUrl}, ${state}`;
-}
-
 export const DownloadItem = memo(function DownloadItem({ d, selected, focusable }: { d: Download; selected: boolean; focusable: boolean }) {
   const live = useStore((s) => s.live[d.id]);
   const select = useStore((s) => s.select);
@@ -172,13 +157,12 @@ export const DownloadItem = memo(function DownloadItem({ d, selected, focusable 
 
   return (
     <>
-      <CM.Root onOpenChange={(o) => o && select(d.id)}>
+      <CM.Root modal={false} onOpenChange={(o) => o && select(d.id)}>
         <CM.Trigger asChild>
           <div
-            role="option"
+            role="row"
             id={`row-${d.id}`}
             aria-selected={selected}
-            aria-label={rowLabel(d)}
             tabIndex={focusable ? 0 : -1}
             data-status={d.status}
             onClick={() => select(d.id)}
@@ -191,15 +175,21 @@ export const DownloadItem = memo(function DownloadItem({ d, selected, focusable 
               "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
             )}
           >
-            <Thumb d={d} />
-            <div className="min-w-0">
+            <div role="gridcell">
+              <Thumb d={d} />
+            </div>
+            <div role="gridcell" className="min-w-0">
               <Tooltip label={d.title && d.title.length > 60 ? d.title : null}>
                 <div className={cn("truncate font-medium", d.status === "cancelled" && "text-muted line-through decoration-muted/60")}>{d.title ?? d.sourceUrl}</div>
               </Tooltip>
               <Meta d={d} live={live} />
             </div>
-            <StatusCell d={d} live={live} />
-            <Actions d={d} />
+            <div role="gridcell" className="min-w-0">
+              <StatusCell d={d} live={live} />
+            </div>
+            <div role="gridcell">
+              <Actions d={d} />
+            </div>
           </div>
         </CM.Trigger>
         <CM.Portal>

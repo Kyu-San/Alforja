@@ -29,6 +29,7 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
   const [smart, setSmart] = useState(false);
   const engineUpdate = useStore((s) => !!s.engine?.updateAvailable);
   return (
+    <header>
     <div role="toolbar" aria-label="Acciones" className="flex h-toolbar shrink-0 items-center gap-2 border-b border-border bg-surface px-3">
       <Tooltip label={`Pega el enlace que hayas copiado  ·  ${mod}+V`}>
         <Button variant="primary" icon={<ClipboardPaste className="size-4" />} onClick={() => pasteFromClipboard()}>
@@ -43,7 +44,7 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
       <IconButton label="Suscripciones" icon={<Rss className="size-5" />} onClick={() => navigate("/suscripciones")} />
       <IconButton label="Navegador" icon={<Globe className="size-5" />} onClick={() => navigate("/navegador")} />
       <IconButton label="Preferencias" shortcut={`${mod}+,`} icon={<Settings className="size-5" />} onClick={() => navigate("/preferencias/general")} />
-      <DM.Root>
+      <DM.Root modal={false}>
         <DM.Trigger asChild>
           <IconButton
             label={engineUpdate ? "Más acciones (hay una versión nueva del motor)" : "Más acciones"}
@@ -79,6 +80,7 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
       </DM.Root>
       <SmartModeDialog open={smart} onOpenChange={setSmart} />
     </div>
+    </header>
   );
 }
 
@@ -98,9 +100,9 @@ function StatusBar() {
   if (totalSpeed > 0) parts.push(`${bytes(totalSpeed)}/s`);
   if (queued) parts.push(`${queued} en cola`);
   return (
-    <div className="flex h-7 shrink-0 items-center border-t border-border bg-surface px-4 text-xs text-muted tabular" role="status" aria-live="off">
-      {parts.length ? parts.join(" · ") : "Sin descargas en marcha"}
-    </div>
+    <footer className="flex h-7 shrink-0 items-center border-t border-border bg-surface px-4 text-xs text-muted tabular">
+      <span role="status" aria-live="off">{parts.length ? parts.join(" · ") : "Sin descargas en marcha"}</span>
+    </footer>
   );
 }
 
@@ -122,7 +124,7 @@ function ListLoading() {
   );
 }
 
-/** La lista es un listbox: flechas, Inicio/Fin, Enter abre, Espacio pausa o reanuda, Supr quita. */
+/** La lista es una tabla navegable (grid): flechas, Inicio/Fin, Enter abre, Espacio pausa o reanuda, Supr quita. */
 function DownloadList() {
   const state = useStore(useShallow((s) => ({ downloads: s.downloads, search: s.search, selectedId: s.selectedId, loaded: s.loaded, loadError: s.loadError })));
   const select = useStore((s) => s.select);
@@ -165,7 +167,7 @@ function DownloadList() {
   return (
     <div
       ref={ref}
-      role="listbox"
+      role="grid"
       aria-label="Descargas"
       className="min-h-0 flex-1 overflow-y-auto"
       onKeyDown={(e) => {
@@ -179,7 +181,7 @@ function DownloadList() {
         else if (e.key === "ArrowUp") go(i <= 0 ? 0 : i - 1);
         else if (e.key === "Home") go(0);
         else if (e.key === "End") go(list.length - 1);
-        else if (selected && e.target instanceof HTMLElement && e.target.getAttribute("role") === "option") {
+        else if (selected && e.target instanceof HTMLElement && e.target.getAttribute("role") === "row") {
           if (e.key === "Enter" || e.key === " " || e.key === "Delete" || e.key === "Backspace") {
             e.preventDefault();
             rowKey.current?.(e.key, e.shiftKey);
@@ -238,9 +240,12 @@ export function MainWindow() {
   return (
     <div className={cn("flex h-full flex-col")}>
       <Toolbar searchRef={searchRef} />
-      <div className="flex min-h-0 flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 flex-col" aria-labelledby="main-title">
+        <h1 id="main-title" className="sr-only">
+          Descargas
+        </h1>
         <DownloadList />
-      </div>
+      </main>
       <StatusBar />
     </div>
   );
