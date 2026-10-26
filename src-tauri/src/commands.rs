@@ -228,7 +228,15 @@ pub fn open_file(app: tauri::AppHandle, state: State<'_, AppState>, id: String) 
 #[tauri::command]
 pub fn reveal_in_folder(app: tauri::AppHandle, state: State<'_, AppState>, id: String) -> AppResult<()> {
     let path = finished_path(&state, &id)?;
-    app.opener().reveal_item_in_dir(path).map_err(|e| AppError::new("open", format!("No se pudo mostrar: {e}")))
+    // En Linux, señalar el archivo necesita un gestor de archivos con D-Bus
+    // (FileManager1) o el portal de escritorio. Si no hay, se abre su carpeta.
+    if app.opener().reveal_item_in_dir(&path).is_ok() {
+        return Ok(());
+    }
+    let dir = Path::new(&path).parent().map(Path::to_path_buf).unwrap_or_default();
+    app.opener()
+        .open_path(dir.to_string_lossy(), None::<&str>)
+        .map_err(|_| AppError::new("open", format!("No se pudo abrir la carpeta. Está en:\n{}", dir.display())))
 }
 
 #[tauri::command]
