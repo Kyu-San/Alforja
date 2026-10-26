@@ -100,14 +100,22 @@ export type SettingsPatch = Partial<Omit<Settings, "proxyUrl" | "cookiesBrowser"
 export interface EngineStatus {
   ytdlpPath: string | null;
   ytdlpVersion: string | null;
+  /** "app" = instalado por la app, "system" = del PATH, "env" = variable de entorno */
+  ytdlpSource: "app" | "system" | "env" | null;
   ffmpegPath: string | null;
   ffmpegVersion: string | null;
+  latestVersion: string | null;
+  updateAvailable: boolean;
+  canRollback: boolean;
+  checkedAt: string | null;
+  updating: boolean;
 }
 
 export type AppEvent =
   | { type: "progress"; id: string; downloadedBytes: number; totalBytes: number | null; speed: number | null; etaS: number | null }
   | { type: "download"; download: Download }
-  | { type: "removed"; id: string };
+  | { type: "removed"; id: string }
+  | { type: "engine"; status: EngineStatus };
 
 export interface AppError { code: string; message: string }
 
@@ -133,6 +141,10 @@ export interface Api {
   getSettings(): Promise<Settings>;
   updateSettings(patch: SettingsPatch): Promise<Settings>;
   engineStatus(): Promise<EngineStatus>;
+  /** Pregunta a GitHub por la última versión. */
+  engineCheck(): Promise<EngineStatus>;
+  engineUpdate(): Promise<EngineStatus>;
+  engineRollback(): Promise<EngineStatus>;
   onEvent(cb: (e: AppEvent) => void): Promise<() => void>;
   readClipboard(): Promise<string | null>;
   pickFolder(current: string): Promise<string | null>;

@@ -1,9 +1,10 @@
-import { CircleCheck, CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck, Download, RefreshCw, Undo2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { api, type EngineStatus, type SettingsPatch } from "../api";
+import { api, type SettingsPatch } from "../api";
+import { Button } from "../components/ui/Button";
 import { cn } from "../components/ui/cn";
-import { Skeleton } from "../components/ui/Feedback";
-import { FolderPicker, Select, TextField } from "../components/ui/Form";
+import { Badge, Skeleton } from "../components/ui/Feedback";
+import { FolderPicker, Select, Switch, TextField } from "../components/ui/Form";
 import { useToast } from "../components/ui/Toast";
 import { message } from "../lib/errors";
 import { navigate } from "../lib/router";
@@ -155,36 +156,109 @@ function Account() {
   );
 }
 
+const sourceLabel = { app: "instalado por la app", system: "del sistema", env: "fijado por variable de entorno" } as const;
+
 function Engine() {
-  const [st, setSt] = useState<EngineStatus | null>(null);
+  const st = useStore((s) => s.engine);
+  const settings = useStore((s) => s.settings)!;
+  const setEngine = useStore((s) => s.setEngine);
+  const { save } = useSave();
+  const toast = useToast();
+  const [checking, setChecking] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
-    api.engineStatus().then(setSt, (e) => setErr(message(e)));
-  }, []);
-  const item = (name: string, version: string | null | undefined, path: string | null | undefined, missing: string) => (
-    <Row label={name} help={path ? <span className="selectable font-mono text-xs break-all">{path}</span> : missing}>
-      {st == null && !err ? (
-        <Skeleton className="h-5 w-32" />
-      ) : version ? (
-        <span className="flex items-center gap-1.5 text-base">
-          <CircleCheck className="size-4 text-success" aria-hidden /> <span className="tabular selectable">{version}</span>
-        </span>
-      ) : (
-        <span className="flex items-center gap-1.5 text-base text-danger">
-          <CircleAlert className="size-4" aria-hidden /> No encontrado
-        </span>
-      )}
-    </Row>
-  );
+    api.engineStatus().then(setEngine, (e) => setErr(message(e)));
+  }, [setEngine]);
+
+  const run = async (what: "check" | "update" | "rollback") => {
+    setErr(null);
+    if (what === "check") setChecking(true);
+    try {
+      const s = await (what === "check" ? api.engineCheck() : what === "update" ? api.engineUpdate() : api.engineRollback());
+      setEngine(s);
+      if (what === "update") toast({ kind: "success", title: `Motor actualizado a ${s.ytdlpVersion}` });
+      if (what === "rollback") toast({ kind: "info", title: `Has vuelto a ${s.ytdlpVersion}` });
+    } catch (e) {
+      setErr(message(e));
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const version = (v: string | null | undefined) =>
+    st == null && !err ? (
+      <Skeleton className="h-5 w-32" />
+    ) : v ? (
+      <span className="flex items-center gap-1.5 text-base">
+        <CircleCheck className="size-4 text-success" aria-hidden /> <span className="tabular selectable">{v}</span>
+      </span>
+    ) : (
+      <span className="flex items-center gap-1.5 text-base text-danger">
+        <CircleAlert className="size-4" aria-hidden /> No encontrado
+      </span>
+    );
+
+  const checked = st?.checkedAt ? new Date(st.checkedAt).toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" }) : null;
+  const pinned = st?.ytdlpSource === "env";
+
   return (
     <>
-      {item("yt-dlp", st?.ytdlpVersion, st?.ytdlpPath, "Es el motor que descarga. Sin él, nada funciona.")}
-      {item("ffmpeg", st?.ffmpegVersion, st?.ffmpegPath, "Une video y audio por encima de 1080p y convierte a MP3.")}
-      {err ? <p className="py-3 text-sm text-danger">{err}</p> : null}
-      <p className="py-4 text-sm text-muted">
-        Los sitios cambian a menudo y el motor necesita actualizarse para seguir funcionando. La actualización desde aquí llega en la próxima versión; mientras tanto, actualiza yt-dlp con tu gestor de paquetes (por
-        ejemplo, <code className="font-mono text-xs">yt-dlp -U</code>).
-      </p>
+      <Row
+        label="yt-dlp"
+        help={
+          st?.ytdlpPath ? (
+            <>
+              {st.ytdlpSource ? `${sourceLabel[st.ytdlpSource]} · ` : ""}
+              <span className="selectable font-mono text-xs break-all">{st.ytdlpPath}</span>
+            </>
+          ) : (
+            "Es el motor que descarga. Sin él, nada funciona."
+          )
+        }
+      >
+        <div className="flex flex-col items-start gap-2">
+          {version(st?.ytdlpVersion)}
+          {st?.updateAvailable && st.latestVersion ? <Badge tone="warning">Hay una versión nueva: {st.latestVersion}</Badge> : st?.latestVersion && st.ytdlpVersion ? <Badge tone="success">Al día</Badge> : null}
+        </div>
+      </Row>
+      <Row
+        label="Actualizar"
+        help={
+          <>
+            Desde las versiones oficiales de yt-dlp en GitHub, comprobando su suma SHA-256 antes de usarla. La anterior se guarda por si la nueva da problemas.
+            {checked ? <> Última comprobación: {checked}.</> : null}
+          </>
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          {st?.updateAvailable || !st?.ytdlpVersion ? (
+            <Button variant="primary" icon={<Download className="size-4" />} loading={st?.updating} disabled={pinned} onClick={() => run("update")}>
+              {st?.ytdlpVersion ? "Actualizar ahora" : "Instalar el motor"}
+            </Button>
+          ) : (
+            <Button icon={<RefreshCw className="size-4" />} loading={checking} disabled={st?.updating} onClick={() => run("check")}>
+              Buscar actualización
+            </Button>
+          )}
+          {st?.canRollback ? (
+            <Button variant="ghost" icon={<Undo2 className="size-4" />} disabled={st.updating} onClick={() => run("rollback")}>
+              Volver a la anterior
+            </Button>
+          ) : null}
+        </div>
+        {pinned ? <p className="mt-2 text-xs text-muted">La variable DESCARGADOR_YTDLP fija el motor: la app no lo cambia.</p> : null}
+        {err ? (
+          <p role="alert" className="mt-2 text-xs text-danger">
+            {err}
+          </p>
+        ) : null}
+      </Row>
+      <Row label="Actualizar solo" htmlFor="auto-update" help="Una vez al día, al abrir la app. Si hay descargas en marcha, espera y te avisa.">
+        <Switch id="auto-update" label="Actualizar el motor solo" checked={settings.engineAutoUpdate} onChange={(v) => save("engineAutoUpdate", { engineAutoUpdate: v })} />
+      </Row>
+      <Row label="ffmpeg" help={st?.ffmpegPath ? <span className="selectable font-mono text-xs break-all">{st.ffmpegPath}</span> : "Une video y audio por encima de 1080p y convierte a MP3."}>
+        {version(st?.ffmpegVersion)}
+      </Row>
     </>
   );
 }

@@ -21,6 +21,9 @@ export const tauriApi: Api = {
   getSettings: () => invoke("get_settings"),
   updateSettings: (patch) => invoke("update_settings", { patch }),
   engineStatus: () => invoke("engine_status"),
+  engineCheck: () => invoke("engine_check"),
+  engineUpdate: () => invoke("engine_update"),
+  engineRollback: () => invoke("engine_rollback"),
   onEvent: (cb) => listen<AppEvent>("app-event", (e) => cb(e.payload)),
   readClipboard: async () => {
     try {

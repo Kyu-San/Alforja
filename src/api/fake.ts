@@ -31,6 +31,18 @@ let settings: Settings = {
 };
 
 const downloads = new Map<string, Download>();
+let engine: EngineStatus = {
+  ytdlpPath: "/usr/local/bin/yt-dlp",
+  ytdlpVersion: "2026.10.21",
+  ytdlpSource: "system",
+  ffmpegPath: "/usr/bin/ffmpeg",
+  ffmpegVersion: "7.1",
+  latestVersion: params.get("engine") === "old" ? "2026.11.02" : "2026.10.21",
+  updateAvailable: params.get("engine") === "old",
+  canRollback: false,
+  checkedAt: null,
+  updating: false,
+};
 const parsed = new Map<string, ParseResult>();
 
 function make(partial: Partial<Download> & { title: string }): Download {
@@ -303,7 +315,28 @@ export const fakeApi: Api = {
     return settings;
   },
   async engineStatus(): Promise<EngineStatus> {
-    return { ytdlpPath: "(simulado)", ytdlpVersion: "2026.10.21", ffmpegPath: "(simulado)", ffmpegVersion: "7.1" };
+    return engine;
+  },
+  async engineCheck() {
+    await sleep(600);
+    engine = { ...engine, latestVersion: "2026.11.02", updateAvailable: engine.ytdlpVersion !== "2026.11.02", checkedAt: now() };
+    return engine;
+  },
+  async engineUpdate() {
+    if ([...downloads.values()].some((d) => ["downloading", "processing", "parsing"].includes(d.status)))
+      throw err("update_busy", "Espera a que terminen (o pausa) las descargas en marcha: el motor está en uso.");
+    engine = { ...engine, updating: true };
+    emit({ type: "engine", status: engine });
+    await sleep(1500);
+    engine = { ...engine, updating: false, ytdlpVersion: "2026.11.02", ytdlpSource: "app", ytdlpPath: "~/.local/share/descargador/bin/yt-dlp", latestVersion: "2026.11.02", updateAvailable: false, canRollback: true, checkedAt: now() };
+    emit({ type: "engine", status: engine });
+    return engine;
+  },
+  async engineRollback() {
+    if (!engine.canRollback) throw err("no_previous", "No hay una versión anterior guardada.");
+    engine = { ...engine, ytdlpVersion: "2026.10.21", updateAvailable: true };
+    emit({ type: "engine", status: engine });
+    return engine;
   },
   async onEvent(cb) {
     listeners.add(cb);

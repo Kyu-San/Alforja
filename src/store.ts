@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api, type AppEvent, type Download, type Settings } from "./api";
+import { api, type AppEvent, type Download, type EngineStatus, type Settings } from "./api";
 
 export interface Live {
   speed: number | null;
@@ -10,6 +10,7 @@ interface State {
   downloads: Record<string, Download>;
   live: Record<string, Live>;
   settings: Settings | null;
+  engine: EngineStatus | null;
   loaded: boolean;
   loadError: string | null;
   selectedId: string | null;
@@ -21,12 +22,14 @@ interface State {
   select: (id: string | null) => void;
   setSearch: (q: string) => void;
   setSettings: (s: Settings) => void;
+  setEngine: (e: EngineStatus) => void;
 }
 
 export const useStore = create<State>((set) => ({
   downloads: {},
   live: {},
   settings: null,
+  engine: null,
   loaded: false,
   loadError: null,
   selectedId: null,
@@ -35,6 +38,7 @@ export const useStore = create<State>((set) => ({
     try {
       const [list, settings] = await Promise.all([api.listDownloads(), api.getSettings()]);
       set({ downloads: Object.fromEntries(list.map((d) => [d.id, d])), settings, loaded: true, loadError: null });
+      api.engineStatus().then((engine) => set({ engine }), () => {});
     } catch (e) {
       set({ loaded: true, loadError: (e as { message?: string })?.message ?? String(e) });
     }
@@ -55,6 +59,8 @@ export const useStore = create<State>((set) => ({
           if (e.download.status !== "downloading") delete live[e.download.id];
           return { downloads: { ...s.downloads, [e.download.id]: e.download }, live };
         }
+        case "engine":
+          return { engine: e.status };
         case "removed": {
           const downloads = { ...s.downloads };
           delete downloads[e.id];
@@ -72,6 +78,7 @@ export const useStore = create<State>((set) => ({
   select: (id) => set({ selectedId: id }),
   setSearch: (q) => set({ search: q }),
   setSettings: (settings) => set({ settings }),
+  setEngine: (engine) => set({ engine }),
 }));
 
 /** Lista ordenada (lo más nuevo arriba) y filtrada por la búsqueda. */

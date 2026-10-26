@@ -27,6 +27,7 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
   const remove = useStore((s) => s.remove);
   const toast = useToast();
   const [smart, setSmart] = useState(false);
+  const engineUpdate = useStore((s) => !!s.engine?.updateAvailable);
   return (
     <div role="toolbar" aria-label="Acciones" className="flex h-toolbar shrink-0 items-center gap-2 border-b border-border bg-surface px-3">
       <Tooltip label={`Pega el enlace que hayas copiado  ·  ${mod}+V`}>
@@ -44,7 +45,11 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
       <IconButton label="Preferencias" shortcut={`${mod}+,`} icon={<Settings className="size-5" />} onClick={() => navigate("/preferencias/general")} />
       <DM.Root>
         <DM.Trigger asChild>
-          <IconButton label="Más acciones" icon={<Ellipsis className="size-5" />} />
+          <IconButton
+            label={engineUpdate ? "Más acciones (hay una versión nueva del motor)" : "Más acciones"}
+            icon={<Ellipsis className="size-5" />}
+            className={engineUpdate ? "relative after:absolute after:right-1 after:top-1 after:size-2 after:rounded-pill after:bg-warning" : undefined}
+          />
         </DM.Trigger>
         <DM.Portal>
           <DM.Content align="end" sideOffset={6} className={menuContent}>
@@ -67,7 +72,7 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
             </DM.Item>
             <DM.Separator className={menuSeparator} />
             <DM.Item className={menuItem} onSelect={() => navigate("/preferencias/motor")}>
-              <Info /> Motor y versión <span className={menuShortcut} />
+              <Info /> {engineUpdate ? "Actualizar el motor" : "Motor y versión"} {engineUpdate ? <span className={`${menuShortcut} text-warning`}>nueva</span> : null}
             </DM.Item>
           </DM.Content>
         </DM.Portal>
