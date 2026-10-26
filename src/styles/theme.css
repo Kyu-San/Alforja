@@ -1,0 +1,65 @@
+/* Generado por build_tokens.py desde tokens.json. No editar a mano. */
+
+@import "tailwindcss";
+
+@theme {
+  --color-*: initial;
+  --color-bg: #0f1115;
+  --color-surface: #171a21;
+  --color-surface-raised: #1f232b;
+  --color-surface-hover: #262a33;
+  --color-border: #2b303a;
+  --color-border-input: #6b7385;
+  --color-text: #e9ebef;
+  --color-muted: #a3aab8;
+  --color-accent: #7b93ff;
+  --color-accent-hover: #95a8ff;
+  --color-on-accent: #0b0d12;
+  --color-focus: #a9b8ff;
+  --color-danger: #f47272;
+  --color-on-danger: #0b0d12;
+  --color-success: #4fc78d;
+  --color-warning: #efb54a;
+  --color-progress-track: #2b303a;
+  --color-scrim: rgba(0,0,0,.55);
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-*: initial;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+  --text-md: 16px;
+  --text-md--line-height: 22px;
+  --text-lg: 20px;
+  --text-lg--line-height: 26px;
+  --text-xl: 24px;
+  --text-xl--line-height: 30px;
+  --radius-*: initial;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --shadow-*: initial;
+  --shadow-card: 0 1px 2px rgba(0,0,0,.40);
+  --shadow-pop: 0 16px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04);
+  --spacing-toolbar: 52px;
+  --spacing-row: 64px;
+  --spacing-row-compact: 48px;
+  --spacing-dialog: 560px;
+  --spacing-dialog-wide: 720px;
+  --spacing-thumb-w: 96px;
+  --spacing-thumb-h: 54px;
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease-app: cubic-bezier(.2,.8,.2,1);
+  --spacing: 4px;
+}
+
+@layer base {
+  :root { color-scheme: dark; }
+  html, body { background: var(--color-bg); color: var(--color-text);
+    font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--text-base--line-height); }
+}

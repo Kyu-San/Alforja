@@ -1,0 +1,25 @@
+@import "./theme.css";
+@import "@fontsource-variable/inter";
+
+@layer base {
+  :root { --font-sans: "Inter Variable", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  html, body, #root { height: 100%; }
+  body { margin: 0; -webkit-font-smoothing: antialiased; overflow: hidden; user-select: none; }
+  /* El texto que el usuario puede querer copiar sí se selecciona. */
+  input, textarea, .selectable { user-select: text; }
+  :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+  button { cursor: default; }
+}
+
+@utility tabular { font-variant-numeric: tabular-nums; }
+
+@keyframes indeterminate { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+@keyframes pulse-soft { 50% { opacity: .45; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes dialog-in { from { opacity: 0; transform: translate(-50%, -48%) scale(.98); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0ms !important; transition-duration: 0ms !important; }
+  .indeterminate-bar { animation: pulse-soft 1.2s ease-in-out infinite !important; animation-duration: 1.2s !important; transform: none !important; width: 100% !important; }
+}

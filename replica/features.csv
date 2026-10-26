@@ -1,0 +1,33 @@
+feature,area,priority,original,clone,notes
+Pegar un enlace desde el portapapeles con un botón,descarga,must,yes,no,el gesto central de la app
+Analizar el enlace y listar formatos y calidades disponibles,descarga,must,yes,no,yt-dlp --dump-json
+Elegir calidad de video (360p a 4K/8K según la fuente),descarga,must,yes,no,>1080p en YouTube viene en pistas separadas: hace falta ffmpeg
+Elegir contenedor MP4 o MKV,descarga,must,yes,no,
+Extraer solo audio a MP3 / M4A / OGG,descarga,must,yes,no,yt-dlp -x con ffmpeg
+Elegir carpeta de destino,descarga,must,yes,no,
+Lista de descargas con progreso / velocidad / tiempo restante,cola,must,yes,no,parsear la salida de progreso de yt-dlp
+Pausar / reanudar / cancelar / reintentar una descarga,cola,must,yes,no,
+Abrir el archivo o mostrarlo en la carpeta,cola,must,yes,no,
+Mensajes de error claros (enlace no soportado / privado / bloqueado por región),cola,must,yes,no,
+Descargar una playlist completa,playlists,must,yes,no,
+Elegir qué videos de la playlist descargar,playlists,should,yes,no,
+Descargar un canal completo,playlists,should,yes,no,
+Subtítulos en SRT con elección de idioma,subtítulos,should,yes,no,
+Incrustar subtítulos en el video,subtítulos,could,yes,no,
+Pista de audio original o de otro idioma,descarga,should,yes,no,añadido en 25.1 / gratis desde 25.2
+Smart Mode: guardar preferencias y descargar con un clic,smart mode,should,yes,no,
+Suscribirse a un canal o playlist y bajar lo nuevo automáticamente,suscripciones,should,yes,no,
+Descargas simultáneas configurables,cola,should,yes,no,
+Preferencias: carpeta / idioma / descargas simultáneas / proxy,preferencias,should,yes,no,
+Actualizar yt-dlp desde la app,mantenimiento,should,no,no,no está en el original; aquí es necesario porque YouTube rompe los descargadores a menudo
+Usar tu propia sesión del navegador para tus playlists privadas o Ver más tarde,cuenta,could,yes,no,solo tu propia cuenta (yt-dlp --cookies-from-browser)
+Navegador integrado para buscar y descargar,navegador,could,yes,no,
+Otros sitios además de YouTube (Vimeo / TikTok / etc.),fuentes,could,yes,no,lo que soporte yt-dlp
+Videos 360° / VR y 3D,descarga,could,yes,no,
+Exportar / importar la lista de descargas,cola,could,yes,no,
+Herramientas de audio con IA (quitar voces / reducir eco),audio IA,could,yes,skip,fuera del bucle principal; añadido en 2026
+Recomendaciones de videos similares en la app,descubrimiento,could,yes,skip,no aporta para uso personal
+Sistema de licencias / planes / activación por dispositivo,licencias,could,yes,skip,es uso personal: no hay nada que vender
+Límites del plan gratuito y anuncios,licencias,could,yes,skip,es su modelo de negocio; no es una función
+Saltarse protecciones de login de YouTube,fuentes,could,yes,skip,elusión de medidas técnicas: no se construye
+Contenido con DRM (Netflix / Spotify / etc.),fuentes,could,no,skip,el original tampoco lo hace; ilegal en muchos países

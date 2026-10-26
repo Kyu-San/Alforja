@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de diseño</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; -webkit-font-smoothing: antialiased; }
+  .num { font-variant-numeric: tabular-nums; }
+  .muted { color: var(--color-text-muted); }
+  .sm { font-size: var(--text-sm); line-height: var(--leading-sm); }
+  .xs { font-size: var(--text-xs); line-height: var(--leading-xs); font-weight: var(--weight-xs); }
+  svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  svg.i20 { width: 20px; height: 20px; }
+
+  /* Ventana de ejemplo (S01) */
+  .window { width: 1040px; height: 520px; margin: 24px; border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+            overflow: hidden; display: flex; flex-direction: column; background: var(--color-bg); position: relative; }
+  .toolbar { height: var(--toolbar-height); background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+             display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+  .spacer { flex: 1; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 16px; border-radius: var(--radius-md);
+         font: 600 var(--text-base)/1 var(--font-sans); border: 1px solid transparent; cursor: pointer; color: var(--color-text);
+         background: transparent; transition: background var(--motion-fast) var(--motion-ease); }
+  .btn:focus-visible, .focus { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+  .btn.primary { background: var(--color-accent); color: var(--color-on-accent); }
+  .btn.primary:hover, .btn.primary.hover { background: var(--color-accent-hover); }
+  .btn.secondary { background: var(--color-surface-raised); border-color: var(--color-border); }
+  .btn.ghost:hover, .btn.secondary:hover, .btn.hover { background: var(--color-surface-hover); }
+  .btn.danger { background: var(--color-danger); color: var(--color-on-danger); }
+  .btn[disabled] { opacity: .45; cursor: default; }
+  .btn.icon { width: 32px; padding: 0; justify-content: center; }
+  .btn.sm { height: 28px; padding: 0 12px; font-size: var(--text-sm); }
+  .btn.icon.sm { width: 28px; padding: 0; }
+
+  .switch { width: 36px; height: 20px; border-radius: var(--radius-pill); background: var(--color-progress-track); position: relative; flex: none; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--color-text-muted); }
+  .switch.on { background: var(--color-accent); }
+  .switch.on::after { left: 19px; background: var(--color-on-accent); }
+  .smart { display: inline-flex; align-items: center; gap: 8px; padding: 0 8px; height: 32px; border-radius: var(--radius-md); }
+  .smart.on { color: var(--color-accent); }
+
+  .list { flex: 1; overflow: hidden; }
+  .row { height: var(--row-height); display: grid; grid-template-columns: 96px minmax(0,1fr) 280px 72px; gap: 12px; align-items: center;
+         padding: 0 16px; border-bottom: 1px solid var(--color-border); position: relative; }
+  .row.hover { background: var(--color-surface-hover); }
+  .row.selected { background: var(--color-surface-raised); }
+  .row.selected::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--color-accent); }
+  .thumb { width: 96px; height: 54px; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--color-surface-raised), var(--color-surface-hover)); }
+  .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status { display: flex; flex-direction: column; gap: 6px; }
+  .status-line { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .actions { display: flex; gap: 2px; justify-content: flex-end; }
+
+  .bar { height: 4px; border-radius: var(--radius-pill); background: var(--color-progress-track); overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--color-accent); border-radius: inherit; }
+  .bar.paused > i { background: var(--color-text-muted); }
+  .bar.indet > i { width: 30%; animation: slide 1.2s var(--motion-ease) infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+
+  .ok { color: var(--color-success); } .warn { color: var(--color-warning); } .bad { color: var(--color-danger); }
+  .statusbar { height: 28px; border-top: 1px solid var(--color-border); background: var(--color-surface); display: flex; align-items: center; padding: 0 16px; }
+
+  /* Diálogo de ejemplo (S03) */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; }
+  .dialog { width: var(--dialog-width); background: var(--color-surface-raised); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); }
+  .dialog header { display: flex; align-items: center; padding: 16px 20px 0; }
+  .dialog h2 { margin: 0; font-size: var(--text-lg); line-height: var(--leading-lg); font-weight: var(--weight-lg); flex: 1; }
+  .dialog .body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .dialog footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid var(--color-border); }
+  .media { display: flex; gap: 12px; align-items: center; }
+  .seg { display: inline-flex; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 2px; }
+  .seg span { padding: 5px 14px; border-radius: 6px; }
+  .seg .on { background: var(--color-surface-hover); }
+  .q { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+  .q + .q { margin-top: 6px; }
+  .q.sel { border-color: var(--color-accent); }
+  .q.na { color: var(--color-text-muted); }
+  .radio { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--color-border-input); flex: none; }
+  .q.sel .radio { border: 5px solid var(--color-accent); }
+  .badge { font-size: var(--text-xs); font-weight: 500; height: 20px; padding: 0 8px; border-radius: var(--radius-pill);
+           background: var(--color-surface-hover); color: var(--color-text-muted); display: inline-flex; align-items: center; }
+  .badge.accent { color: var(--color-accent); } .badge.ok { color: var(--color-success); } .badge.warn { color: var(--color-warning); } .badge.bad { color: var(--color-danger); }
+  .fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .select, .field { height: 32px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px;
+                    background: var(--color-surface); border: 1px solid var(--color-border-input); border-radius: var(--radius-md); }
+  .field.err { border-color: var(--color-danger); }
+  .label { font-size: var(--text-xs); font-weight: 500; color: var(--color-text-muted); margin-bottom: 4px; display: block; }
+  .check { display: flex; align-items: center; gap: 8px; }
+  .box { width: 16px; height: 16px; border-radius: var(--radius-sm); border: 1px solid var(--color-border-input); display: inline-flex; align-items: center; justify-content: center; }
+  .box.on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+
+  /* Muestrario */
+  .sheet { margin: 0 24px 24px; width: 1040px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 16px; }
+  .card h3 { margin: 0 0 12px; font-size: var(--text-md); line-height: var(--leading-md); font-weight: var(--weight-md); }
+  .wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .menu { width: 300px; background: var(--color-surface-raised); border-radius: var(--radius-md); box-shadow: var(--shadow-pop); padding: 4px; }
+  .mi { height: 32px; display: flex; align-items: center; gap: 10px; padding: 0 8px; border-radius: 6px; }
+  .mi.hl { background: var(--color-surface-hover); }
+  .mi .k { margin-left: auto; }
+  .sep { height: 1px; background: var(--color-border); margin: 4px 0; }
+  .toast { width: 360px; background: var(--color-surface-raised); box-shadow: var(--shadow-pop); border-radius: var(--radius-md);
+           border-left: 3px solid var(--color-success); padding: 12px 14px; display: flex; gap: 10px; }
+  .toast.e { border-left-color: var(--color-danger); }
+  .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .sw { height: 44px; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+  .empty { text-align: center; padding: 24px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="paste" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11v6M9 14l3 3 3-3"/></symbol>
+  <symbol id="zap" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="rss" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></symbol>
+  <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></symbol>
+  <symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+  <symbol id="pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9z"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="retry" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M8 16H3v5"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+</svg>
+
+<!-- S01 con el diálogo S03 abierto encima -->
+<div class="window">
+  <div class="toolbar" role="toolbar" aria-label="Acciones">
+    <button class="btn primary"><svg class="i"><use href="#paste"/></svg>Pegar enlace</button>
+    <span class="smart on"><span class="switch on" role="switch" aria-checked="true"></span><svg class="i"><use href="#zap"/></svg>Smart Mode</span>
+    <span class="spacer"></span>
+    <button class="btn ghost" style="width:220px;justify-content:flex-start;border-color:var(--color-border-input);font-weight:400"><svg class="i"><use href="#search"/></svg><span class="muted">Buscar en la lista</span></button>
+    <button class="btn ghost icon" aria-label="Suscripciones"><svg class="i i20"><use href="#rss"/></svg></button>
+    <button class="btn ghost icon" aria-label="Navegador"><svg class="i i20"><use href="#globe"/></svg></button>
+    <button class="btn ghost icon" aria-label="Preferencias"><svg class="i i20"><use href="#cog"/></svg></button>
+    <button class="btn ghost icon" aria-label="Más"><svg class="i i20"><use href="#more"/></svg></button>
+  </div>
+  <div class="list" role="listbox" aria-label="Descargas">
+    <div class="row selected" role="option">
+      <div class="thumb"></div>
+      <div style="min-width:0"><div class="title">Cómo afinar una guitarra en 5 minutos (sin afinador)</div>
+        <div class="sm muted num">MP4 · 1080p · Canal de ejemplo</div></div>
+      <div class="status"><div class="status-line sm num"><span>128 / 412 MB</span><span class="muted">· 6,2 MB/s · 0:47</span><span style="margin-left:auto">31 %</span></div>
+        <div class="bar"><i style="width:31%"></i></div></div>
+      <div class="actions"><button class="btn ghost icon sm" aria-label="Pausar"><svg class="i"><use href="#pause"/></svg></button><button class="btn ghost icon sm" aria-label="Cancelar"><svg class="i"><use href="#x"/></svg></button></div>
+    </div>
+    <div class="row hover" role="option">
+      <div class="thumb"></div>
+      <div style="min-width:0"><div class="title">Documental: el viaje de la luz (4K)</div>
+        <div class="sm muted num">MKV · 2160p · 2,1 GB</div></div>
+      <div class="status"><div class="status-line sm"><span>Uniendo video y audio…</span></div><div class="bar indet"><i></i></div></div>
+      <div class="actions"><button class="btn ghost icon sm" aria-label="Cancelar"><svg class="i"><use href="#x"/></svg></button></div>
+    </div>
+    <div class="row" role="option">
+      <div class="thumb"></div>
+      <div style="min-width:0"><div class="title">Podcast 112 — entrevista completa</div>
+        <div class="sm muted num">MP3 · 320 kbps · 86 MB</div></div>
+      <div class="status"><div class="status-line sm"><svg class="i ok"><use href="#check"/></svg><span>Listo</span></div></div>
+      <div class="actions"><button class="btn ghost icon sm" aria-label="Mostrar en la carpeta"><svg class="i"><use href="#folder"/></svg></button></div>
+    </div>
+    <div class="row" role="option">
+      <div class="thumb"></div>
+      <div style="min-width:0"><div class="title">Clase de cocina: pan casero</div>
+        <div class="sm muted num">MP4 · 1080p · 640 MB</div></div>
+      <div class="status"><div class="status-line sm"><svg class="i ok"><use href="#check"/></svg><span>Listo</span><span class="warn">· 1080p (no había 4K)</span></div></div>
+      <div class="actions"><button class="btn ghost icon sm" aria-label="Mostrar en la carpeta"><svg class="i"><use href="#folder"/></svg></button></div>
+    </div>
+    <div class="row" role="option">
+      <div class="thumb"></div>
+      <div style="min-width:0"><div class="title">Video privado de una lista</div>
+        <div class="sm muted">MP4 · 1080p</div></div>
+      <div class="status"><div class="status-line sm bad"><svg class="i"><use href="#alert"/></svg><span>Privado: conecta tu cuenta</span></div></div>
+      <div class="actions"><button class="btn ghost icon sm" aria-label="Reintentar"><svg class="i"><use href="#retry"/></svg></button></div>
+    </div>
+    <div class="row" role="option">
+      <div class="thumb"></div>
+      <div style="min-width:0"><div class="title">Concierto en directo — parte 2</div>
+        <div class="sm muted num">MP4 · 720p · 210 / 530 MB</div></div>
+      <div class="status"><div class="status-line sm muted"><span>En pausa</span><span style="margin-left:auto" class="num">40 %</span></div><div class="bar paused"><i style="width:40%"></i></div></div>
+      <div class="actions"><button class="btn ghost icon sm" aria-label="Reanudar"><svg class="i"><use href="#play"/></svg></button></div>
+    </div>
+  </div>
+  <div class="statusbar xs muted num">2 descargando · 6,2 MB/s · 1 en cola</div>
+</div>
+
+<div class="window" style="height:760px">
+  <div class="toolbar"><button class="btn primary"><svg class="i"><use href="#paste"/></svg>Pegar enlace</button></div>
+  <div class="scrim">
+    <div class="dialog" role="dialog" aria-labelledby="dt">
+      <header><h2 id="dt">Descargar</h2><button class="btn ghost icon sm" aria-label="Cerrar"><svg class="i"><use href="#x"/></svg></button></header>
+      <div class="body">
+        <div class="media"><div class="thumb" style="width:120px;height:68px"></div>
+          <div><div class="title" style="max-width:360px">Documental: el viaje de la luz (4K)</div><div class="sm muted num">Canal de ejemplo · 42:18</div></div></div>
+        <div class="seg sm" role="radiogroup"><span class="on">Video</span><span class="muted">Solo audio</span></div>
+        <div role="radiogroup" aria-label="Calidad">
+          <div class="q sel"><span class="radio"></span>2160p 4K <span class="badge accent">HDR</span><span class="spacer"></span><span class="sm muted num">2,1 GB</span></div>
+          <div class="q"><span class="radio"></span>1080p <span class="badge">60 fps</span><span class="spacer"></span><span class="sm muted num">640 MB</span></div>
+          <div class="q"><span class="radio"></span>720p<span class="spacer"></span><span class="sm muted num">310 MB</span></div>
+          <div class="q na"><span class="radio"></span>4320p 8K<span class="spacer"></span><span class="sm">no disponible</span></div>
+        </div>
+        <div class="fields">
+          <div><span class="label">Formato</span><div class="select">MKV<svg class="i muted"><use href="#down"/></svg></div></div>
+          <div><span class="label">Audio</span><div class="select">Original<svg class="i muted"><use href="#down"/></svg></div></div>
+          <div><span class="label">Subtítulos</span><div class="select focus">Español, Inglés<svg class="i muted"><use href="#down"/></svg></div></div>
+        </div>
+        <div><span class="label">Guardar en</span><div style="display:flex;gap:8px"><div class="field" style="flex:1"><span class="sm">/Users/…/Videos/Documentales</span></div><button class="btn secondary">Cambiar…</button></div></div>
+        <label class="check sm"><span class="box on"><svg class="i" style="width:12px;height:12px"><use href="#check"/></svg></span>Incrustar los subtítulos en el video</label>
+        <label class="check sm"><span class="box"></span>Usar siempre estos ajustes (Smart Mode)</label>
+      </div>
+      <footer><button class="btn ghost">Cancelar</button><button class="btn primary">Descargar</button></footer>
+    </div>
+  </div>
+</div>
+
+<div class="sheet">
+  <div class="card"><h3>Botones</h3>
+    <div class="wrap">
+      <button class="btn primary">Primario</button><button class="btn primary hover">Hover</button>
+      <button class="btn primary focus">Foco</button><button class="btn primary" disabled>Desactivado</button>
+    </div><div class="wrap" style="margin-top:8px">
+      <button class="btn secondary">Secundario</button><button class="btn ghost">Fantasma</button>
+      <button class="btn danger"><svg class="i"><use href="#trash"/></svg>Borrar archivo</button>
+      <button class="btn primary" aria-busy="true"><svg class="i" style="animation:spin 1s linear infinite"><use href="#retry"/></svg>Analizando…</button>
+    </div>
+  </div>
+  <div class="card"><h3>Menú contextual</h3>
+    <div class="menu sm">
+      <div class="mi"><svg class="i"><use href="#play"/></svg>Reproducir<span class="k xs muted">Enter</span></div>
+      <div class="mi hl"><svg class="i"><use href="#folder"/></svg>Mostrar en la carpeta</div>
+      <div class="sep"></div>
+      <div class="mi muted"><svg class="i"><use href="#retry"/></svg>Reintentar</div>
+      <div class="sep"></div>
+      <div class="mi bad"><svg class="i"><use href="#trash"/></svg>Quitar y borrar el archivo<span class="k xs muted">Shift+Supr</span></div>
+    </div>
+  </div>
+  <div class="card"><h3>Campos y estados</h3>
+    <span class="label">Proxy</span><div class="field err"><span class="sm">ftp//mal</span></div>
+    <div class="xs bad" style="margin-top:4px">Escribe una dirección que empiece por http:// o socks5://</div>
+    <div class="wrap" style="margin-top:12px"><span class="badge">neutral</span><span class="badge accent">3 nuevos</span><span class="badge ok">al día</span><span class="badge warn">actualización disponible</span><span class="badge bad">error</span></div>
+  </div>
+  <div class="card"><h3>Avisos</h3>
+    <div class="toast sm"><svg class="i ok"><use href="#check"/></svg><div><b>Descarga terminada</b><div class="muted">Podcast 112 — entrevista completa</div></div></div>
+    <div class="toast e sm" style="margin-top:8px"><svg class="i bad"><use href="#alert"/></svg><div><b>Fallan varias descargas seguidas</b><div class="muted">Puede que el motor esté desactualizado.</div><button class="btn secondary sm" style="margin-top:8px">Actualizar motor</button></div></div>
+  </div>
+  <div class="card"><h3>Lista vacía</h3>
+    <div class="empty"><svg class="i muted" style="width:40px;height:40px"><use href="#inbox"/></svg>
+      <div style="font-size:var(--text-md);font-weight:600;margin-top:8px">Aún no hay descargas</div>
+      <div class="muted" style="margin:4px 0 12px">Copia el enlace de un video y pulsa Pegar enlace (o Ctrl+V).</div>
+      <button class="btn primary"><svg class="i"><use href="#paste"/></svg>Pegar enlace</button></div>
+  </div>
+  <div class="card"><h3>Paleta (roles)</h3>
+    <div class="swatches xs muted">
+      <div><div class="sw" style="background:var(--color-bg)"></div>bg</div>
+      <div><div class="sw" style="background:var(--color-surface)"></div>surface</div>
+      <div><div class="sw" style="background:var(--color-surface-raised)"></div>raised</div>
+      <div><div class="sw" style="background:var(--color-surface-hover)"></div>hover</div>
+      <div><div class="sw" style="background:var(--color-border)"></div>border</div>
+      <div><div class="sw" style="background:var(--color-border-input)"></div>input</div>
+      <div><div class="sw" style="background:var(--color-text)"></div>text</div>
+      <div><div class="sw" style="background:var(--color-text-muted)"></div>muted</div>
+      <div><div class="sw" style="background:var(--color-accent)"></div>accent</div>
+      <div><div class="sw" style="background:var(--color-danger)"></div>danger</div>
+      <div><div class="sw" style="background:var(--color-success)"></div>success</div>
+      <div><div class="sw" style="background:var(--color-warning)"></div>warning</div>
+    </div>
+  </div>
+</div>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>

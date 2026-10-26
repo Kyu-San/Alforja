@@ -1,0 +1,69 @@
+/* Generado por build_tokens.py desde tokens.json. No editar a mano. */
+
+:root {
+  color-scheme: dark;
+  --color-bg: #0f1115;
+  --color-surface: #171a21;
+  --color-surface-raised: #1f232b;
+  --color-surface-hover: #262a33;
+  --color-border: #2b303a;
+  --color-border-input: #6b7385;
+  --color-text: #e9ebef;
+  --color-text-muted: #a3aab8;
+  --color-accent: #7b93ff;
+  --color-accent-hover: #95a8ff;
+  --color-on-accent: #0b0d12;
+  --color-focus: #a9b8ff;
+  --color-danger: #f47272;
+  --color-on-danger: #0b0d12;
+  --color-success: #4fc78d;
+  --color-warning: #efb54a;
+  --color-progress-track: #2b303a;
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --leading-xs: 16px;
+  --weight-xs: 500;
+  --text-sm: 13px;
+  --leading-sm: 18px;
+  --weight-sm: 400;
+  --text-base: 14px;
+  --leading-base: 20px;
+  --weight-base: 400;
+  --text-md: 16px;
+  --leading-md: 22px;
+  --weight-md: 600;
+  --text-lg: 20px;
+  --leading-lg: 26px;
+  --weight-lg: 600;
+  --text-xl: 24px;
+  --leading-xl: 30px;
+  --weight-xl: 700;
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(0,0,0,.40);
+  --shadow-pop: 0 16px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04);
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-ease: cubic-bezier(.2,.8,.2,1);
+  --toolbar-height: 52px;
+  --row-height: 64px;
+  --row-height-compact: 48px;
+  --dialog-width: 560px;
+  --dialog-width-wide: 720px;
+}
+
+html, body { background: var(--color-bg); color: var(--color-text);
+  font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-base); }
+@media (prefers-reduced-motion: reduce) { :root { --motion-fast: 0ms; --motion-base: 0ms; } }
