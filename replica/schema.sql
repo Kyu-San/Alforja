@@ -142,3 +142,6 @@ create trigger settings_touch after update on settings for each row
 
 -- Migración 0002 (durante /replica-build): calidad real obtenida.
 alter table downloads add column actual_quality text;
+
+-- Migración 0003 (durante /replica-backend): última versión del motor vista.
+alter table settings add column engine_latest_version text;

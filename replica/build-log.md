@@ -17,7 +17,7 @@ Capturas en `replica/clone-screens/` (`real-*.png` = la app de escritorio real e
 | S08 Smart Mode | 2026-10-26 | solo diálogo | todo (recomendable) | — |
 | S09 menú contextual | 2026-10-26 | hecho | probar Abrir/Mostrar en un escritorio real | — |
 | S10 cuenta | 2026-10-26 | parcial | probar con un perfil de navegador real | El mismo fallo de Radix con `""`. |
-| S11 motor | 2026-10-26 | parcial | **actualizar yt-dlp desde la app (F09)** | — |
+| S11 motor | 2026-10-26 | hecho | — | Con `/replica-backend`: actualización desde GitHub con SHA-256 y vuelta atrás. La etiqueta de estado se estiraba a todo el ancho. |
 
 ## Cómo se probó
 

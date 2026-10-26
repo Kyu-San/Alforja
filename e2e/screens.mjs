@@ -147,6 +147,23 @@ await check("S05, S06, S07 (4 secciones), S08", async () => {
   await shot(p, "S08");
 });
 
+await check("S11 motor: hay versión nueva, actualizar, volver atrás; ocupado con descargas", async () => {
+  let p = await page("?engine=old");
+  await p.getByRole("button", { name: /Más acciones \(hay una versión nueva/ }).waitFor();
+  await p.goto(BASE + "?engine=old#/preferencias/motor");
+  await p.getByText("Hay una versión nueva: 2026.11.02").waitFor();
+  await shot(p, "S11-update");
+  await p.getByRole("button", { name: "Actualizar ahora" }).click();
+  await p.getByRole("alert").filter({ hasText: "Espera a que terminen" }).waitFor();
+  p = await page("?seed=empty&engine=old#/preferencias/motor");
+  await p.getByRole("button", { name: "Actualizar ahora" }).click();
+  await p.getByText("Motor actualizado a 2026.11.02").first().waitFor();
+  await p.getByText("Al día", { exact: true }).waitFor();
+  await shot(p, "S11-updated");
+  await p.getByRole("button", { name: "Volver a la anterior" }).click();
+  await p.getByText("Has vuelto a 2026.10.21").first().waitFor();
+});
+
 await check("F01 solo con teclado: Ctrl+V, Tab hasta Descargar, Enter; flechas y Espacio en la lista", async () => {
   const p = await page("?seed=empty");
   await setClipboard(p, "https://ejemplo.com/v/teclado");
