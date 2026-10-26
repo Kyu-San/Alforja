@@ -75,6 +75,17 @@ export const useStore = create<State>((set) => ({
 }));
 
 /** Lista ordenada (lo más nuevo arriba) y filtrada por la búsqueda. */
+/** Selecciona una fila y le da el foco cuando ya esté pintada. */
+export function focusDownload(id: string) {
+  useStore.getState().select(id);
+  const tryFocus = (n: number) => {
+    const el = document.getElementById(`row-${id}`);
+    if (el) el.focus();
+    else if (n > 0) requestAnimationFrame(() => tryFocus(n - 1));
+  };
+  requestAnimationFrame(() => tryFocus(10));
+}
+
 export function visibleDownloads(s: Pick<State, "downloads" | "search">): Download[] {
   const q = s.search.trim().toLowerCase();
   return Object.values(s.downloads)

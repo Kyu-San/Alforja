@@ -53,7 +53,8 @@ export function useDownloadActions(d: Download) {
 }
 
 function Meta({ d, live }: { d: Download; live?: Live }) {
-  const parts: ReactNode[] = [d.container.toUpperCase(), requestedQuality(d.kind, d.quality)];
+  const quality = d.status === "done" && d.actualQuality && !gotLess(d.quality, d.actualQuality) ? d.actualQuality : requestedQuality(d.kind, d.quality);
+  const parts: ReactNode[] = [d.container.toUpperCase(), quality];
   if (d.status === "downloading") {
     parts.push(`${bytes(d.downloadedBytes)} / ${bytes(d.sizeBytes)}`);
   } else if (d.sizeBytes) {
@@ -181,6 +182,7 @@ export const DownloadItem = memo(function DownloadItem({ d, selected, focusable 
             tabIndex={focusable ? 0 : -1}
             data-status={d.status}
             onClick={() => select(d.id)}
+            onFocus={() => !selected && select(d.id)}
             onDoubleClick={() => d.status === "done" && a.open()}
             className={cn(
               "group relative grid h-row grid-cols-[auto_minmax(0,1fr)_minmax(0,17.5rem)_4.5rem] items-center gap-3 border-b border-border px-4 outline-none",

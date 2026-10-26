@@ -9,6 +9,7 @@ import { EmptyState, Skeleton } from "../components/ui/Feedback";
 import { SearchField } from "../components/ui/Form";
 import { menuContent, menuItem, menuSeparator, menuShortcut } from "../components/ui/Menu";
 import { useToast } from "../components/ui/Toast";
+import { Tooltip } from "../components/ui/Tooltip";
 import { message } from "../lib/errors";
 import { bytes } from "../lib/format";
 import { navigate } from "../lib/router";
@@ -28,9 +29,11 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
   const [smart, setSmart] = useState(false);
   return (
     <div role="toolbar" aria-label="Acciones" className="flex h-toolbar shrink-0 items-center gap-2 border-b border-border bg-surface px-3">
-      <Button variant="primary" icon={<ClipboardPaste className="size-4" />} onClick={() => pasteFromClipboard()} title={`Pegar enlace (${mod}+V)`}>
-        Pegar enlace
-      </Button>
+      <Tooltip label={`Pega el enlace que hayas copiado  ·  ${mod}+V`}>
+        <Button variant="primary" icon={<ClipboardPaste className="size-4" />} onClick={() => pasteFromClipboard()}>
+          Pegar enlace
+        </Button>
+      </Tooltip>
       <Button variant="ghost" icon={<Zap className="size-4" />} onClick={() => setSmart(true)} className="font-medium">
         Smart Mode
       </Button>
@@ -230,7 +233,9 @@ export function MainWindow() {
   return (
     <div className={cn("flex h-full flex-col")}>
       <Toolbar searchRef={searchRef} />
-      <DownloadList />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <DownloadList />
+      </div>
       <StatusBar />
     </div>
   );
