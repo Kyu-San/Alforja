@@ -96,11 +96,12 @@ export interface Option {
 
 export function Select({ label, value, onChange, options, disabled, placeholder, className }: { label: string; value: string; onChange: (v: string) => void; options: Option[]; disabled?: boolean; placeholder?: string; className?: string }) {
   const id = useId();
+  const triggerId = useId();
   return (
     <div className={cn("min-w-0", className)}>
       <Label id={id}>{label}</Label>
       <S.Root value={value} onValueChange={onChange} disabled={disabled}>
-        <S.Trigger aria-labelledby={id} className={cn(fieldBase, "flex items-center justify-between gap-2 text-left data-[state=open]:border-accent")}>
+        <S.Trigger id={triggerId} aria-labelledby={`${id} ${triggerId}`} className={cn(fieldBase, "flex items-center justify-between gap-2 text-left data-[state=open]:border-accent")}>
           <span className="truncate">
             <S.Value placeholder={placeholder} />
           </span>

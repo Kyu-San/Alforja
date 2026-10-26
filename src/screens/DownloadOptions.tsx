@@ -87,6 +87,7 @@ export function QualityList({ qualities, value, onChange, audioSize }: { qualiti
 
 export function SubtitlePicker({ tracks, value, onChange }: { tracks: SubtitleTrack[]; value: string[]; onChange: (v: string[]) => void }) {
   const id = useId();
+  const triggerId = useId();
   const sorted = [...tracks].sort((a, b) => Number(a.auto) - Number(b.auto) || language(a.lang).localeCompare(language(b.lang)));
   const summary = value.length ? value.map(language).join(", ") : tracks.length ? "Ninguno" : "No tiene";
   return (
@@ -94,7 +95,8 @@ export function SubtitlePicker({ tracks, value, onChange }: { tracks: SubtitleTr
       <Label id={id}>Subtítulos</Label>
       <DM.Root modal={false}>
         <DM.Trigger
-          aria-labelledby={id}
+          id={triggerId}
+          aria-labelledby={`${id} ${triggerId}`}
           disabled={!tracks.length}
           className="flex h-8 w-full items-center justify-between gap-2 rounded-md border border-border-input bg-surface px-2.5 text-left text-base outline-none hover:border-muted focus-visible:border-accent disabled:opacity-45 data-[state=open]:border-accent"
         >
