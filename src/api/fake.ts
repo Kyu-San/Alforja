@@ -155,7 +155,7 @@ function fakeVideo(url: string): MediaInfo {
     uploader: "Canal de ejemplo",
     durationS: 2538,
     thumbnail: null,
-    qualities: heights.map((h) => ({ height: h, sizeBytes: Math.round(h * h * 0.45), highFps: h >= 1080, hdr: h === 2160 })),
+    qualities: heights.map((h) => ({ height: h, sizeBytes: Math.round(h * h * 380), highFps: h >= 1080, hdr: h === 2160 })),
     audioSizeBytes: 41_000_000,
     audioTracks: [
       { lang: "es", isOriginal: true },
