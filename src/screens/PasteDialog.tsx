@@ -154,7 +154,7 @@ function VideoDialog({ info, onOpenChange }: { info: MediaInfo; onOpenChange: (o
     setBusy(true);
     try {
       const d = await api.startDownload(info.url, toOptions(c));
-      useStore.getState().upsert(d);
+      useStore.getState().add(d);
       onOpenChange(false);
       focusDownload(d.id);
     } catch (e) {
@@ -245,7 +245,7 @@ function PlaylistDialog({ info, onOpenChange }: { info: PlaylistInfo; onOpenChan
     try {
       const ids = info.entries.filter((e) => selected.has(e.id)).map((e) => e.id);
       const ds = await api.startPlaylistDownload(info.url, ids, toOptions(c));
-      ds.forEach(useStore.getState().upsert);
+      ds.forEach(useStore.getState().add);
       onOpenChange(false);
       if (ds[0]) focusDownload(ds[0].id);
       toast({ kind: "success", title: `${ids.length} ${ids.length === 1 ? "video" : "videos"} en la cola`, body: `Se guardan en la carpeta «${info.title}».` });

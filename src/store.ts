@@ -17,7 +17,8 @@ interface State {
   search: string;
   load: () => Promise<void>;
   apply: (e: AppEvent) => void;
-  upsert: (d: Download) => void;
+  /** Añade una descarga recién creada; si ya llegó por evento (más nueva), no la toca. */
+  add: (d: Download) => void;
   remove: (ids: string[]) => void;
   select: (id: string | null) => void;
   setSearch: (q: string) => void;
@@ -68,7 +69,7 @@ export const useStore = create<State>((set) => ({
         }
       }
     }),
-  upsert: (d) => set((s) => ({ downloads: { ...s.downloads, [d.id]: d } })),
+  add: (d) => set((s) => (s.downloads[d.id] ? s : { downloads: { ...s.downloads, [d.id]: d } })),
   remove: (ids) =>
     set((s) => {
       const downloads = { ...s.downloads };
