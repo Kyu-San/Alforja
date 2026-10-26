@@ -3,6 +3,7 @@ pub mod db;
 pub mod engine;
 pub mod models;
 pub mod queue;
+pub mod updater;
 
 use std::sync::{Arc, RwLock};
 
@@ -31,9 +32,15 @@ pub fn run() {
             let sink: queue::Sink = Arc::new(move |ev| {
                 let _ = handle.emit("app-event", ev);
             });
-            let q = queue::Queue::start(queue::Ctx { db: db.clone(), engine: engine.clone(), sink });
+            let q = queue::Queue::start(queue::Ctx { db: db.clone(), engine: engine.clone(), sink: sink.clone() });
             q.wake();
-            app.manage(AppState::new(db, engine, q, bin_dir));
+            app.manage(AppState::new(db, engine, q, bin_dir, sink));
+            // Motor: instalar si falta, comprobar una vez al día. Sin bloquear el arranque.
+            let h = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                let state = h.state::<AppState>();
+                commands::startup_engine_check(&state).await;
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -52,6 +59,9 @@ pub fn run() {
             commands::get_settings,
             commands::update_settings,
             commands::engine_status,
+            commands::engine_check,
+            commands::engine_update,
+            commands::engine_rollback,
         ])
         .run(tauri::generate_context!())
         .expect("no se pudo arrancar la app");

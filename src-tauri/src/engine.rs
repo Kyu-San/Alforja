@@ -18,6 +18,8 @@ use crate::models::*;
 pub struct Engine {
     pub ytdlp: PathBuf,
     pub ffmpeg: Option<PathBuf>,
+    /// "env", "app" o "system": de dónde salió yt-dlp.
+    pub source: &'static str,
 }
 
 fn exe(name: &str) -> String {
@@ -35,9 +37,12 @@ impl Engine {
     pub fn locate(app_bin_dir: Option<&Path>) -> Option<Engine> {
         let from_env = |var: &str| std::env::var_os(var).map(PathBuf::from).filter(|p| p.is_file());
         let in_bin = |name: &str| app_bin_dir.map(|d| d.join(exe(name))).filter(|p| p.is_file());
-        let ytdlp = from_env("DESCARGADOR_YTDLP").or_else(|| in_bin("yt-dlp")).or_else(|| which("yt-dlp"))?;
+        let (ytdlp, source) = from_env("DESCARGADOR_YTDLP")
+            .map(|p| (p, "env"))
+            .or_else(|| in_bin("yt-dlp").map(|p| (p, "app")))
+            .or_else(|| which("yt-dlp").map(|p| (p, "system")))?;
         let ffmpeg = from_env("DESCARGADOR_FFMPEG").or_else(|| in_bin("ffmpeg")).or_else(|| which("ffmpeg"));
-        Some(Engine { ytdlp, ffmpeg })
+        Some(Engine { ytdlp, ffmpeg, source })
     }
 
     pub fn command(&self) -> Command {
@@ -536,7 +541,7 @@ mod tests {
 
     #[test]
     fn download_args_are_safe() {
-        let e = Engine { ytdlp: "yt-dlp".into(), ffmpeg: None };
+        let e = Engine { ytdlp: "yt-dlp".into(), ffmpeg: None, source: "system" };
         let a = e.download_args(&download(Kind::Video, "mkv", "1080p"), &settings()).unwrap();
         assert_eq!(&a[a.len() - 2..], ["--".to_string(), "https://example.com/v".to_string()]);
         assert!(a.contains(&"bv*[height<=1080]+ba/b[height<=1080]/bv*+ba/b".to_string()), "el idioma inseguro se descarta");

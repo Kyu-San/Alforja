@@ -12,7 +12,8 @@ use tauri_plugin_opener::OpenerExt;
 use crate::db::{Db, NewDownload};
 use crate::engine::{self, Engine};
 use crate::models::*;
-use crate::queue::{Queue, Stop};
+use crate::queue::{Queue, Sink, Stop};
+use crate::updater::{self, Updater};
 
 /// Los enlaces de los formatos caducan: el análisis vale 10 minutos.
 const PARSE_TTL: Duration = Duration::from_secs(600);
@@ -22,12 +23,17 @@ pub struct AppState {
     pub engine: Arc<RwLock<Option<Engine>>>,
     pub queue: Queue,
     pub bin_dir: PathBuf,
+    pub updater: Updater,
+    pub sink: Sink,
+    /// Una sola actualización del motor a la vez.
+    update_lock: tokio::sync::Mutex<()>,
     parsed: Mutex<HashMap<String, (Instant, ParseResult)>>,
 }
 
 impl AppState {
-    pub fn new(db: Arc<Db>, engine: Arc<RwLock<Option<Engine>>>, queue: Queue, bin_dir: PathBuf) -> Self {
-        AppState { db, engine, queue, bin_dir, parsed: Mutex::new(HashMap::new()) }
+    pub fn new(db: Arc<Db>, engine: Arc<RwLock<Option<Engine>>>, queue: Queue, bin_dir: PathBuf, sink: Sink) -> Self {
+        let updater = Updater::new(bin_dir.clone());
+        AppState { db, engine, queue, bin_dir, updater, sink, update_lock: tokio::sync::Mutex::new(()), parsed: Mutex::new(HashMap::new()) }
     }
 
     fn engine(&self) -> AppResult<Engine> {
@@ -264,18 +270,152 @@ pub fn update_settings(state: State<'_, AppState>, patch: SettingsPatch) -> AppR
     Ok(s)
 }
 
+// ---------- motor (F09) ----------
+
+/// Cómo está el motor ahora: versiones, de dónde sale y si hay una nueva.
+pub async fn engine_status_of(state: &AppState) -> AppResult<EngineStatus> {
+    let e = state.engine.read().unwrap_or_else(|e| e.into_inner()).clone();
+    let (_, _, latest, checked_at) = state.db.engine_meta()?;
+    let (ytdlp_version, ffmpeg_version) = match &e {
+        Some(e) => (e.version().await, e.ffmpeg_version().await),
+        None => (None, None),
+    };
+    let update_available = match (&latest, &ytdlp_version) {
+        (Some(l), Some(v)) => updater::newer(l, v),
+        (Some(_), None) => true,
+        _ => false,
+    };
+    Ok(EngineStatus {
+        ytdlp_path: e.as_ref().map(|e| e.ytdlp.to_string_lossy().into_owned()),
+        ytdlp_source: e.as_ref().map(|e| e.source.to_string()),
+        ffmpeg_path: e.as_ref().and_then(|e| e.ffmpeg.as_ref()).map(|p| p.to_string_lossy().into_owned()),
+        ytdlp_version,
+        ffmpeg_version,
+        latest_version: latest,
+        update_available,
+        can_rollback: state.updater.can_rollback(),
+        checked_at,
+        updating: state.update_lock.try_lock().is_err(),
+    })
+}
+
+async fn emit_engine(state: &AppState) {
+    if let Ok(status) = engine_status_of(state).await {
+        (state.sink)(AppEvent::Engine { status });
+    }
+}
+
+/// Pregunta a GitHub por la última versión y la apunta.
+pub async fn check_latest(state: &AppState) -> AppResult<updater::Release> {
+    let rel = state.updater.latest().await?;
+    state.db.set_engine_checked(&rel.version)?;
+    Ok(rel)
+}
+
+/// Instala la última versión. No mientras haya descargas usando el motor.
+pub async fn update_engine_now(state: &AppState) -> AppResult<EngineStatus> {
+    let Ok(_guard) = state.update_lock.try_lock() else {
+        return Err(AppError::new("update_busy", "Ya se está actualizando el motor."));
+    };
+    if state.db.count_active()? > 0 {
+        return Err(AppError::new("update_busy", "Espera a que terminen (o pausa) las descargas en marcha: el motor está en uso."));
+    }
+    (state.sink)(AppEvent::Engine { status: EngineStatus { updating: true, ..engine_status_of(state).await? } });
+    let result = async {
+        let rel = check_latest(state).await?;
+        let previous = state.engine.read().unwrap_or_else(|e| e.into_inner()).clone();
+        let prev_version = match &previous {
+            Some(e) if e.source == "app" => e.version().await,
+            _ => None,
+        };
+        let version = state.updater.install(&rel).await?;
+        state.db.set_engine_installed(&version, prev_version.as_deref())?;
+        relocate(state);
+        Ok::<_, AppError>(())
+    }
+    .await;
+    drop(_guard);
+    emit_engine(state).await;
+    result?;
+    engine_status_of(state).await
+}
+
+/// Vuelve a buscar el motor (tras instalar o volver atrás).
+fn relocate(state: &AppState) {
+    *state.engine.write().unwrap_or_else(|e| e.into_inner()) = Engine::locate(Some(&state.bin_dir));
+}
+
+/// Al arrancar: si no hay motor, se instala; si toca (una vez al día), se
+/// comprueba y, con la actualización automática activada, se actualiza.
+pub async fn startup_engine_check(state: &AppState) {
+    let Ok(settings) = state.db.get_settings() else { return };
+    let missing = state.engine.read().unwrap_or_else(|e| e.into_inner()).is_none();
+    if missing {
+        if let Err(e) = update_engine_now(state).await {
+            eprintln!("motor: no se pudo instalar: {e}");
+        }
+        return;
+    }
+    if !settings.engine_auto_update {
+        return;
+    }
+    let (_, _, _, checked_at) = state.db.engine_meta().unwrap_or_default();
+    let due = checked_at
+        .and_then(|t| chrono::DateTime::parse_from_rfc3339(&t).ok())
+        .map_or(true, |t| chrono::Utc::now().signed_duration_since(t) > chrono::Duration::hours(24));
+    if !due {
+        return;
+    }
+    match check_latest(state).await {
+        Ok(rel) => {
+            let current = state.engine.read().unwrap_or_else(|e| e.into_inner()).clone();
+            let current_version = match current {
+                Some(e) => e.version().await.unwrap_or_default(),
+                None => String::new(),
+            };
+            if updater::newer(&rel.version, &current_version) {
+                if let Err(e) = update_engine_now(state).await {
+                    // Normalmente: hay descargas en marcha. La interfaz lo ofrece después.
+                    eprintln!("motor: actualización pospuesta: {e}");
+                    emit_engine(state).await;
+                }
+            }
+        }
+        Err(e) => eprintln!("motor: no se pudo comprobar: {e}"),
+    }
+}
+
 #[tauri::command]
 pub async fn engine_status(state: State<'_, AppState>) -> AppResult<EngineStatus> {
-    let e = state.engine.read().unwrap_or_else(|e| e.into_inner()).clone();
-    Ok(match e {
-        None => EngineStatus { ytdlp_path: None, ytdlp_version: None, ffmpeg_path: None, ffmpeg_version: None },
-        Some(e) => EngineStatus {
-            ytdlp_version: e.version().await,
-            ffmpeg_version: e.ffmpeg_version().await,
-            ytdlp_path: Some(e.ytdlp.to_string_lossy().into_owned()),
-            ffmpeg_path: e.ffmpeg.as_ref().map(|p| p.to_string_lossy().into_owned()),
-        },
-    })
+    engine_status_of(&state).await
+}
+
+#[tauri::command]
+pub async fn engine_check(state: State<'_, AppState>) -> AppResult<EngineStatus> {
+    check_latest(&state).await?;
+    engine_status_of(&state).await
+}
+
+#[tauri::command]
+pub async fn engine_update(state: State<'_, AppState>) -> AppResult<EngineStatus> {
+    update_engine_now(&state).await
+}
+
+#[tauri::command]
+pub async fn engine_rollback(state: State<'_, AppState>) -> AppResult<EngineStatus> {
+    let Ok(_guard) = state.update_lock.try_lock() else {
+        return Err(AppError::new("update_busy", "Ya se está actualizando el motor."));
+    };
+    if state.db.count_active()? > 0 {
+        return Err(AppError::new("update_busy", "Espera a que terminen (o pausa) las descargas en marcha: el motor está en uso."));
+    }
+    state.updater.rollback()?;
+    relocate(&state);
+    let (cur, prev, _, _) = state.db.engine_meta()?;
+    state.db.set_engine_installed(prev.as_deref().unwrap_or(""), cur.as_deref())?;
+    drop(_guard);
+    emit_engine(&state).await;
+    engine_status_of(&state).await
 }
 
 #[cfg(test)]

@@ -226,8 +226,15 @@ pub struct SettingsPatch {
 pub struct EngineStatus {
     pub ytdlp_path: Option<String>,
     pub ytdlp_version: Option<String>,
+    /// "app" (instalado por la app), "system" (PATH) o "env" (variable de entorno).
+    pub ytdlp_source: Option<String>,
     pub ffmpeg_path: Option<String>,
     pub ffmpeg_version: Option<String>,
+    pub latest_version: Option<String>,
+    pub update_available: bool,
+    pub can_rollback: bool,
+    pub checked_at: Option<String>,
+    pub updating: bool,
 }
 
 /// Lo que el backend avisa a la interfaz (evento "app-event").
@@ -244,6 +251,7 @@ pub enum AppEvent {
     },
     Download { download: Download },
     Removed { id: String },
+    Engine { status: EngineStatus },
 }
 
 /// Error que ve la interfaz: un código estable y un mensaje en español.

@@ -11,6 +11,7 @@ use crate::models::*;
 const MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0001_init.sql"),
     include_str!("../migrations/0002_actual_quality.sql"),
+    include_str!("../migrations/0003_engine_latest.sql"),
 ];
 
 const DOWNLOAD_COLUMNS: &str = "id, source_url, video_id, extractor, title, uploader, thumbnail_url, duration_s, \
@@ -153,6 +154,40 @@ impl Db {
             if let Some(v) = p.notify_on_finish { c.execute("update settings set notify_on_finish = ?1 where id = 1", [v as i64])?; }
         }
         self.get_settings()
+    }
+
+    /// (versión instalada, versión anterior, última vista, comprobada el)
+    pub fn engine_meta(&self) -> AppResult<(Option<String>, Option<String>, Option<String>, Option<String>)> {
+        Ok(self.conn().query_row(
+            "select engine_version, engine_prev_version, engine_latest_version, engine_checked_at from settings where id = 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )?)
+    }
+
+    pub fn set_engine_checked(&self, latest: &str) -> AppResult<()> {
+        self.conn().execute(
+            "update settings set engine_latest_version = ?1, engine_checked_at = ?2 where id = 1",
+            params![latest, now()],
+        )?;
+        Ok(())
+    }
+
+    pub fn set_engine_installed(&self, version: &str, previous: Option<&str>) -> AppResult<()> {
+        self.conn().execute(
+            "update settings set engine_version = ?1, engine_prev_version = ?2 where id = 1",
+            params![version, previous],
+        )?;
+        Ok(())
+    }
+
+    /// ¿Hay algo usando el motor ahora mismo?
+    pub fn count_active(&self) -> AppResult<i64> {
+        Ok(self.conn().query_row(
+            "select count(*) from downloads where status in ('parsing','downloading','processing')",
+            [],
+            |r| r.get(0),
+        )?)
     }
 
     // ---------- descargas ----------
