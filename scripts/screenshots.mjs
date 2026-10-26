@@ -1,13 +1,13 @@
 // Recorre cada pantalla con la capa simulada, guarda capturas para
 // /replica-diff y comprueba teclado y consola.
-//   npx vite --port 1420 &   y luego   node e2e/screens.mjs
+//   npx vite --port 1420 &   y luego   node scripts/screenshots.mjs
 import { createRequire } from "node:module";
 // Playwright viene preinstalado en el sistema; se carga con require.
 const { chromium } = createRequire(import.meta.url)("playwright");
 import assert from "node:assert/strict";
 
 const BASE = process.env.BASE ?? "http://localhost:1420/";
-const OUT = new URL("../replica/clone-screens/", import.meta.url).pathname;
+const OUT = new URL("../replica/clone-screens/", import.meta.url).pathname; // capturas para /replica-diff
 const b = await chromium.launch();
 const errors = [];
 const results = [];
@@ -35,7 +35,7 @@ const setClipboard = (p, text) => p.evaluate((t) => navigator.clipboard.writeTex
 
 await check("S01 lista con estados, 1040 / 760 / 1440", async () => {
   let p = await page();
-  assert.equal(await p.getByRole("option").count(), 6);
+  assert.equal(await p.getByRole("row").count(), 6);
   await shot(p, "S01");
   for (const [w, h] of [[760, 480], [1440, 900]]) {
     p = await page("", { width: w, height: h });
@@ -61,7 +61,7 @@ await check("S01 vacía, títulos largos, búsqueda sin resultados", async () =>
 
 await check("S09 menú contextual", async () => {
   const p = await page();
-  await p.getByRole("option").nth(2).click({ button: "right" });
+  await p.getByRole("row").nth(2).click({ button: "right" });
   await p.getByRole("menuitem", { name: /Mostrar en la carpeta/ }).waitFor();
   await shot(p, "S09");
 });
@@ -114,7 +114,7 @@ await check("S04 lista: filtrar, deseleccionar y descargar", async () => {
   await shot(p, "S04-filtered");
   await p.getByRole("button", { name: "Descargar 20" }).click();
   await p.getByText("20 videos en la cola").first().waitFor();
-  assert.equal(await p.getByRole("option").count(), 20);
+  assert.equal(await p.getByRole("row").count(), 20);
 });
 
 await check("S05, S06, S07 (4 secciones), S08", async () => {
@@ -177,13 +177,13 @@ await check("F01 solo con teclado: Ctrl+V, Tab hasta Descargar, Enter; flechas y
   }
   assert.ok(found, "Descargar se alcanza con Tab");
   await p.keyboard.press("Enter");
-  await p.getByRole("option").first().waitFor();
+  await p.getByRole("row").first().waitFor();
   // Lista: Tab entra en la fila, Espacio pausa.
-  await p.getByRole("option").first().focus();
+  await p.getByRole("row").first().focus();
   await p.keyboard.press("Space");
-  await p.locator("[role=option][data-status=paused]").waitFor();
+  await p.locator("[role=row][data-status=paused]").waitFor();
   await p.keyboard.press("Space");
-  await p.locator("[role=option]:not([data-status=paused])").waitFor();
+  await p.locator("[role=row]:not([data-status=paused])").waitFor();
 });
 
 await check("Cola simulada: progreso y terminado", async () => {

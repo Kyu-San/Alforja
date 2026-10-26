@@ -4,8 +4,7 @@
 //!     python3 scripts/test_server.py <carpeta-con-videos> 8766 &
 //!     DESCARGADOR_TEST_SERVER=http://127.0.0.1:8766 cargo test --test queue_e2e -- --test-threads=1
 //!
-//! La carpeta necesita: hls/master.m3u8 (720p + 360p + audio aparte),
-//! clip1.mp4, big.mp4 y big2.mp4 (unos 5 MB cada uno) y feed.xml (RSS con clip1 y clip2).
+//! La carpeta la genera `scripts/make_fixtures.sh <carpeta> 8766`.
 //! Sin DESCARGADOR_TEST_SERVER, las pruebas se saltan.
 
 use std::sync::{Arc, Mutex, RwLock};
@@ -16,6 +15,18 @@ use descargador_lib::engine::Engine;
 use descargador_lib::models::*;
 use descargador_lib::queue::{Ctx, Queue, Stop};
 
+fn opts(kind: Kind, container: &str, quality: &str) -> DownloadOptions {
+    DownloadOptions {
+        kind,
+        container: container.into(),
+        quality: quality.into(),
+        audio_lang: None,
+        subtitle_langs: vec![],
+        subtitles_embedded: false,
+        output_dir: None,
+    }
+}
+
 struct Harness {
     db: Arc<Db>,
     queue: Queue,
@@ -25,18 +36,22 @@ struct Harness {
 }
 
 fn harness() -> Option<Harness> {
+    harness_with(true)
+}
+
+fn harness_with(with_engine: bool) -> Option<Harness> {
     let server = std::env::var("DESCARGADOR_TEST_SERVER").ok()?;
     std::env::set_var("NO_PROXY", "127.0.0.1,localhost");
     std::env::set_var("no_proxy", "127.0.0.1,localhost");
     let dir = tempfile::tempdir().unwrap();
     let db = Arc::new(Db::open(&dir.path().join("t.sqlite3")).unwrap());
     db.ensure_settings(&dir.path().join("out").to_string_lossy()).unwrap();
-    let engine = Engine::locate(None).expect("yt-dlp en el PATH");
+    let engine = if with_engine { Some(Engine::locate(None).expect("yt-dlp en el PATH")) } else { None };
     let events = Arc::new(Mutex::new(Vec::new()));
     let ev = events.clone();
     let queue = Queue::start(Ctx {
         db: db.clone(),
-        engine: Arc::new(RwLock::new(Some(engine))),
+        engine: Arc::new(RwLock::new(engine)),
         sink: Arc::new(move |e| ev.lock().unwrap().push(e)),
     });
     Some(Harness { db, queue, events, dir, server })
@@ -44,17 +59,13 @@ fn harness() -> Option<Harness> {
 
 impl Harness {
     fn add(&self, path: &str, kind: Kind, container: &str, quality: &str) -> Download {
-        let o = DownloadOptions {
-            kind,
-            container: container.into(),
-            quality: quality.into(),
-            audio_lang: None,
-            subtitle_langs: vec![],
-            subtitles_embedded: false,
-            output_dir: None,
-        };
         let out = self.db.get_settings().unwrap().output_dir;
-        let d = self.db.insert_download(&NewDownload { source_url: format!("{}{}", self.server, path), ..Default::default() }, &o, &out).unwrap();
+        self.add_with(path, opts(kind, container, quality), &out)
+    }
+
+    fn add_with(&self, path: &str, o: DownloadOptions, out: &str) -> Download {
+        let url = if path.starts_with("http") { path.to_string() } else { format!("{}{}", self.server, path) };
+        let d = self.db.insert_download(&NewDownload { source_url: url, ..Default::default() }, &o, out).unwrap();
         self.queue.wake();
         d
     }
@@ -199,4 +210,183 @@ fn playlist_parses_and_downloads_each_entry() {
     assert_eq!(d.status, Status::Done, "{:?}", d.error_message);
     assert!(d.output_path.unwrap().contains("Lista de prueba"));
     assert_eq!(d.title.as_deref(), Some("Primer clip"));
+}
+
+#[test]
+fn f01_e3_e4_long_titles_emoji_and_accents() {
+    let Some(h) = harness() else { return };
+    // Carpeta con acentos, espacios y emoji.
+    let out = h.dir.path().join("Música y vídeos 🎬");
+    let out = out.to_string_lossy().into_owned();
+    let a = h.add_with("/emoji.html", opts(Kind::Video, "mp4", "best"), &out);
+    let b = h.add_with("/long.html", opts(Kind::Video, "mp4", "best"), &out);
+    let a = h.wait_for(&a.id, |d| d.status.is_finished(), 60);
+    let b = h.wait_for(&b.id, |d| d.status.is_finished(), 60);
+    assert_eq!(a.status, Status::Done, "{:?}", a.error_message);
+    assert_eq!(b.status, Status::Done, "{:?}", b.error_message);
+    let pa = std::path::PathBuf::from(a.output_path.unwrap());
+    assert!(pa.is_file() && pa.starts_with(&out));
+    assert!(pa.file_name().unwrap().to_string_lossy().contains("Canción de cuna — ñandú"), "{pa:?}");
+    assert_eq!(a.title.as_deref(), Some("🎬 Canción de cuna — ñandú & «comillas» (1)"));
+    let pb = std::path::PathBuf::from(b.output_path.unwrap());
+    let name = pb.file_name().unwrap().to_string_lossy().into_owned();
+    assert!(pb.is_file());
+    assert!(name.len() <= 255, "nombre de {} bytes", name.len());
+}
+
+#[test]
+fn f01_e8_closing_the_app_midway_resumes_from_the_part_file() {
+    let Some(h) = harness() else { return };
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let d = h.add("/slow/big3.mp4", Kind::Video, "mp4", "best");
+    h.wait_for(&d.id, |d| d.downloaded_bytes > 600_000, 30);
+    rt.block_on(h.queue.stop(&d.id, Stop::Pause)).unwrap();
+    h.wait_for(&d.id, |d| d.status == Status::Paused, 10);
+    // Como si la app se hubiera cerrado a mitad: quedó "downloading" en la base de datos.
+    h.db.set_status(&d.id, Status::Downloading).unwrap();
+    // Reabrir: misma base de datos, cola nueva.
+    let db2 = Arc::new(Db::open(&h.dir.path().join("t.sqlite3")).unwrap());
+    assert_eq!(db2.recover_on_start().unwrap(), 1);
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let ev = events.clone();
+    let q2 = Queue::start(Ctx {
+        db: db2.clone(),
+        engine: Arc::new(RwLock::new(Engine::locate(None))),
+        sink: Arc::new(move |e| ev.lock().unwrap().push(e)),
+    });
+    q2.wake();
+    let t = Instant::now();
+    loop {
+        let x = db2.get_download(&d.id).unwrap().unwrap();
+        if x.status.is_finished() {
+            assert_eq!(x.status, Status::Done, "{:?}", x.error_message);
+            break;
+        }
+        assert!(t.elapsed() < Duration::from_secs(60));
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    let first = events.lock().unwrap().iter().find_map(|e| match e {
+        AppEvent::Progress { downloaded_bytes, .. } => Some(*downloaded_bytes),
+        _ => None,
+    });
+    assert!(first.unwrap_or(0) >= 500_000, "continúa desde el .part, no desde cero: {first:?}");
+}
+
+#[test]
+fn f01_e10_offline_is_a_network_error() {
+    let Some(h) = harness() else { return };
+    let d = h.add("http://127.0.0.1:9/video.mp4", Kind::Video, "mp4", "best");
+    let d = h.wait_for(&d.id, |d| d.status.is_finished(), 60);
+    assert_eq!((d.status, d.error_code.as_deref()), (Status::Error, Some("network")));
+}
+
+#[test]
+fn f01_e11_already_downloaded_finishes_with_the_same_file() {
+    let Some(h) = harness() else { return };
+    let a = h.add("/clip2.mp4", Kind::Video, "mp4", "best");
+    let a = h.wait_for(&a.id, |d| d.status.is_finished(), 60);
+    let b = h.add("/clip2.mp4", Kind::Video, "mp4", "best");
+    let b = h.wait_for(&b.id, |d| d.status.is_finished(), 60);
+    assert_eq!(b.status, Status::Done);
+    assert_eq!(a.output_path, b.output_path);
+}
+
+#[test]
+fn f01_n4_unwritable_folder_is_a_clear_error() {
+    let Some(h) = harness() else { return };
+    // Una "carpeta" dentro de un archivo: no se puede crear (también como root).
+    let file = h.dir.path().join("soy-un-archivo");
+    std::fs::write(&file, b"x").unwrap();
+    let out = file.join("destino").to_string_lossy().into_owned();
+    let d = h.add_with("/clip1.mp4", opts(Kind::Video, "mp4", "best"), &out);
+    let d = h.wait_for(&d.id, |d| d.status.is_finished(), 30);
+    assert_eq!((d.status, d.error_code.as_deref()), (Status::Error, Some("output_dir")));
+    assert!(d.error_message.unwrap().starts_with("No se puede escribir en la carpeta"));
+}
+
+#[test]
+fn f01_n5_without_engine_the_row_says_so() {
+    let Some(h) = harness_with(false) else { return };
+    let d = h.add("/clip1.mp4", Kind::Video, "mp4", "best");
+    let d = h.wait_for(&d.id, |d| d.status.is_finished(), 10);
+    assert_eq!((d.status, d.error_code.as_deref()), (Status::Error, Some("engine_missing")));
+}
+
+#[test]
+fn f02_e1_m4a_and_ogg() {
+    let Some(h) = harness() else { return };
+    let a = h.add("/clip1.mp4", Kind::Audio, "m4a", "128k");
+    let b = h.add("/clip2.mp4", Kind::Audio, "ogg", "best");
+    for (d, ext) in [(a, ".m4a"), (b, ".ogg")] {
+        let d = h.wait_for(&d.id, |d| d.status.is_finished(), 60);
+        assert_eq!(d.status, Status::Done, "{ext}: {:?}", d.error_message);
+        assert!(d.output_path.unwrap().ends_with(ext));
+    }
+}
+
+#[test]
+fn f06_h2_subtitles_as_srt_and_embedded() {
+    let Some(h) = harness() else { return };
+    let out = h.db.get_settings().unwrap().output_dir;
+    let mut o = opts(Kind::Video, "mkv", "best");
+    o.subtitle_langs = vec!["es".into()];
+    let d = h.add_with("/subs.html", o.clone(), &out);
+    let d = h.wait_for(&d.id, |d| d.status.is_finished(), 60);
+    assert_eq!(d.status, Status::Done, "{:?}", d.error_message);
+    let video = d.output_path.unwrap();
+    let srt = format!("{}.es.srt", video.trim_end_matches(".mkv"));
+    let text = std::fs::read_to_string(&srt).unwrap_or_else(|_| panic!("falta {srt}"));
+    assert!(text.contains("Segunda línea, con acentos: ñ á é."));
+    assert!(!std::path::Path::new(&format!("{}.en.srt", video.trim_end_matches(".mkv"))).exists(), "solo el idioma pedido");
+
+    // Incrustados: el .mkv lleva una pista de subtítulos.
+    std::fs::remove_file(&video).unwrap();
+    o.subtitles_embedded = true;
+    let e = h.add_with("/subs.html", o, &out);
+    let e = h.wait_for(&e.id, |d| d.status.is_finished(), 60);
+    assert_eq!(e.status, Status::Done, "{:?}", e.error_message);
+    let probe = std::process::Command::new("ffprobe")
+        .args(["-v", "error", "-select_streams", "s", "-show_entries", "stream=index", "-of", "csv=p=0"])
+        .arg(e.output_path.unwrap())
+        .output()
+        .unwrap();
+    assert!(!String::from_utf8_lossy(&probe.stdout).trim().is_empty(), "el video no tiene pista de subtítulos");
+}
+
+#[test]
+fn f07_e2_rapid_pause_resume_ends_well() {
+    let Some(h) = harness() else { return };
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let d = h.add("/slow/big4.mp4", Kind::Video, "mp4", "best");
+    for _ in 0..5 {
+        h.wait_for(&d.id, |d| d.status == Status::Downloading, 20);
+        std::thread::sleep(Duration::from_millis(150));
+        rt.block_on(h.queue.stop(&d.id, Stop::Pause)).unwrap();
+        h.wait_for(&d.id, |d| d.status == Status::Paused, 10);
+        h.db.set_status(&d.id, Status::Queued).unwrap();
+        h.queue.wake();
+    }
+    let d = h.wait_for(&d.id, |d| d.status.is_finished(), 90);
+    assert_eq!(d.status, Status::Done, "{:?}", d.error_message);
+    assert_eq!(h.db.list_downloads(None).unwrap().len(), 1);
+    assert!(h.partial_files().is_empty(), "quedan temporales: {:?}", h.partial_files());
+    let size = std::fs::metadata(d.output_path.unwrap()).unwrap().len();
+    assert!(size > 5_000_000, "archivo completo: {size}");
+}
+
+#[test]
+fn f07_e3_remove_while_downloading() {
+    let Some(h) = harness() else { return };
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let d = h.add("/slow/big5.mp4", Kind::Video, "mp4", "best");
+    h.wait_for(&d.id, |d| d.downloaded_bytes > 200_000, 30);
+    rt.block_on(h.queue.stop(&d.id, Stop::Remove { delete_file: true })).unwrap();
+    let t = Instant::now();
+    while h.db.get_download(&d.id).unwrap().is_some() {
+        assert!(t.elapsed() < Duration::from_secs(10), "la fila sigue ahí");
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    std::thread::sleep(Duration::from_millis(500));
+    assert!(h.partial_files().is_empty(), "quedan temporales: {:?}", h.partial_files());
+    assert!(h.events.lock().unwrap().iter().any(|e| matches!(e, AppEvent::Removed { id } if id == &d.id)));
 }

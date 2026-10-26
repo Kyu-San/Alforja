@@ -5,6 +5,8 @@
 // ?seed=empty  empieza sin descargas
 // ?seed=long   títulos muy largos
 // ?slow=1      análisis lento (para ver el estado "Analizando")
+// ?big=1       listas de 2.000 videos
+// ?engine=old  hay una versión nueva del motor
 
 import type { Api, AppEvent, Download, DownloadOptions, EngineStatus, MediaInfo, ParseResult, PlaylistInfo, Settings, Status } from "./types";
 
@@ -188,7 +190,7 @@ function fakePlaylist(url: string): PlaylistInfo {
     title: url.includes("canal") ? "Canal de ejemplo" : "Curso completo de guitarra",
     uploader: "Canal de ejemplo",
     kind: url.includes("canal") ? "channel" : "playlist",
-    entries: Array.from({ length: 24 }, (_, i) => ({
+    entries: Array.from({ length: params.get("big") ? 2000 : 24 }, (_, i) => ({
       id: `e${i + 1}`,
       url: `${url}&v=${i + 1}`,
       title: `Lección ${i + 1}: ${["acordes básicos", "ritmo", "escalas", "arpegios", "improvisación", "repaso"][i % 6]}`,
