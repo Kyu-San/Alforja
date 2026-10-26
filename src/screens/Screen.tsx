@@ -13,12 +13,14 @@ export function Screen({ title, children, actions }: { title: string; children: 
       }}
     >
       <header className="flex h-toolbar shrink-0 items-center gap-2 border-b border-border bg-surface px-3">
-        <IconButton label="Volver a las descargas" shortcut="Esc" icon={<ArrowLeft className="size-5" />} onClick={() => navigate("/")} autoFocus />
+        <IconButton label="Volver a las descargas" shortcut="Esc" icon={<ArrowLeft className="size-5" />} onClick={() => navigate("/")} />
         <h1 className="m-0 text-md">{title}</h1>
         <div className="flex-1" />
         {actions}
       </header>
-      <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+      <main ref={(el) => el?.focus({ preventScroll: true })} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none">
+        {children}
+      </main>
     </div>
   );
 }

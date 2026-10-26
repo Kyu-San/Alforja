@@ -91,7 +91,7 @@ function General() {
           onBlur={() => template !== s.filenameTemplate && save("filenameTemplate", { filenameTemplate: template })}
           onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
           error={errors.filenameTemplate}
-          className="font-mono"
+          inputClassName="font-mono text-sm"
         />
       </Row>
     </>
@@ -117,6 +117,9 @@ function Network() {
   );
 }
 
+// Radix Select no admite "" como valor.
+const NO_SESSION = "none";
+
 function Account() {
   const s = useStore((st) => st.settings)!;
   const { save, errors } = useSave();
@@ -133,10 +136,10 @@ function Account() {
       >
         <Select
           label="Navegador"
-          value={s.cookiesBrowser ?? ""}
-          onChange={(v) => save("cookiesBrowser", { cookiesBrowser: v })}
+          value={s.cookiesBrowser ?? NO_SESSION}
+          onChange={(v) => save("cookiesBrowser", { cookiesBrowser: v === NO_SESSION ? "" : v })}
           options={[
-            { value: "", label: "No usar ninguna sesión" },
+            { value: NO_SESSION, label: "No usar ninguna sesión" },
             { value: "firefox", label: "Firefox", hint: "recomendado" },
             { value: "chrome", label: "Chrome" },
             { value: "edge", label: "Edge" },
