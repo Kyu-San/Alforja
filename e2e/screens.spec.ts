@@ -1,21 +1,20 @@
 import { axe, expect, test } from "./fixtures";
 
-test("F04-H1 Smart Mode explica que aún no está", async ({ page }) => {
+test("F08-H1 navegador no construido, Esc vuelve", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Smart Mode" }).click();
-  await expect(page.getByRole("dialog", { name: "Smart Mode" })).toContainText("Llega en la próxima versión");
-  await axe(page, "S08");
-});
-
-test("F05-H1 y F08-H1 pantallas no construidas, Esc vuelve", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Suscripciones" }).click();
-  await expect(page.getByRole("heading", { name: "Suscripciones", exact: true })).toBeVisible();
-  await axe(page, "S05");
+  await page.getByRole("button", { name: "Navegador" }).click();
+  await expect(page.getByText("El navegador integrado aún no está disponible")).toBeVisible();
+  await axe(page, "S06");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("toolbar")).toBeVisible();
-  await page.getByRole("button", { name: "Navegador" }).click();
-  await axe(page, "S06");
+});
+
+test("NAV-E1 Esc vuelve a la lista aunque el foco no esté en la pantalla", async ({ page }) => {
+  await page.goto("/#/suscripciones");
+  await expect(page.getByRole("heading", { name: "Suscripciones", exact: true })).toBeVisible();
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("toolbar")).toBeVisible();
 });
 
 test.describe("S07 preferencias", () => {
@@ -46,6 +45,14 @@ test.describe("S07 preferencias", () => {
     await expect(page.getByLabel("Cuántas")).toContainText("5");
     await page.getByRole("link", { name: "Cuenta" }).click();
     await expect(page.getByLabel("Navegador")).toContainText("Firefox");
+  });
+
+  test("S07-H2 avisar al terminar se puede apagar", async ({ page }) => {
+    await page.goto("/#/preferencias/general");
+    const sw = page.getByRole("switch", { name: "Avisar al terminar" });
+    await expect(sw).toBeChecked();
+    await sw.click();
+    await expect(sw).not.toBeChecked();
   });
 });
 
