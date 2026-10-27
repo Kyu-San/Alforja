@@ -10,14 +10,16 @@ Capturas en `replica/clone-screens/` (`real-*.png` = la app de escritorio real e
 | S01 lista | 2026-10-26 | hecho | virtualizar la lista principal si pasa de unos cientos de filas | La lista vacía dejaba la barra de estado a media ventana; foco itinerante = selección (si no, Espacio no hacía nada). |
 | S02 análisis | 2026-10-26 | hecho | — | — |
 | S03 un video | 2026-10-26 | hecho | probar subtítulos y pistas de audio con un video real | Radix Select no admite `""` como valor (la pista de audio salía vacía). El foco inicial caía en Cerrar y abría su tooltip. |
-| S04 lista / canal | 2026-10-26 | parcial | la raíz de un canal (`@nombre`) devuelve pestañas, no videos | Probado en la app real con un RSS local (`real-S04.png`). |
-| S05 suscripciones | 2026-10-26 | solo pantalla | todo (recomendable) | — |
+| S04 lista / canal | 2026-10-27 | hecho (canal: parcial) | probar la raíz de un canal contra YouTube | Segunda pasada: botón Suscribirse; con Smart Mode se abre con sus opciones; la raíz de un canal sigue la pestaña de videos (solo probado con JSON simulado). |
+| S05 suscripciones | 2026-10-27 | hecho | — | Más grande de lo que parecía: hacía falta una tabla de "vistos" (migración 0004) para no bajar el canal entero al suscribirse, y otra prueba con un RSS que cambia durante la prueba. Probado con el motor real y en la app real. |
 | S06 navegador | 2026-10-26 | solo pantalla | todo (opcional) | — |
 | S07 preferencias | 2026-10-26 | parcial | idioma de la interfaz | Validación en los dos lados (Rust y capa simulada). |
-| S08 Smart Mode | 2026-10-26 | solo diálogo | todo (recomendable) | — |
+| S08 Smart Mode | 2026-10-27 | hecho | — | El aviso "En la cola con Smart Mode" se repetía al volver a la lista (BUG-008); el botón activado no se veía en color de acento (BUG-009). Probado en la app real. |
 | S09 menú contextual | 2026-10-26 | hecho | probar Abrir/Mostrar en un escritorio real | — |
 | S10 cuenta | 2026-10-26 | parcial | probar con un perfil de navegador real | El mismo fallo de Radix con `""`. |
 | S11 motor | 2026-10-26 | hecho | — | Con `/replica-backend`: actualización desde GitHub con SHA-256 y vuelta atrás. La etiqueta de estado se estiraba a todo el ancho. |
+
+| S01 extras | 2026-10-27 | hecho | — | Recordar la última elección del diálogo (localStorage, con caída si no hay) y notificación del sistema al terminar (`tauri-plugin-notification`, se puede apagar). |
 
 ## Cómo se probó
 

@@ -117,11 +117,14 @@ await check("S04 lista: filtrar, deseleccionar y descargar", async () => {
   assert.equal(await p.getByRole("row").count(), 20);
 });
 
-await check("S05, S06, S07 (4 secciones), S08", async () => {
+await check("S05 (vacía y con suscripciones), S06, S07 (4 secciones), S08", async () => {
   const p = await page();
   await p.getByRole("button", { name: "Suscripciones" }).click();
   await p.getByRole("heading", { name: "Suscripciones", exact: true }).waitFor();
   await shot(p, "S05");
+  const ps = await page("?subs=1#/suscripciones");
+  await ps.getByRole("list", { name: "Suscripciones" }).waitFor();
+  await shot(ps, "S05-list");
   await p.keyboard.press("Escape");
   await p.getByRole("toolbar").waitFor();
   await p.getByRole("button", { name: "Navegador" }).click();

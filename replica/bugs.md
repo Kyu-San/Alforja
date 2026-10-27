@@ -12,8 +12,12 @@ Build de partida: d3de251. Entorno: Linux, Chromium 1.63 (Playwright) para la in
 | BUG-005 | S3 | Abrir un menú oculta la ventana al lector de pantalla pero deja el foco dentro | arreglado en 57896aa |
 | BUG-006 | S3 | "Mostrar en la carpeta" falla en Linux sin gestor de archivos D-Bus, con un error técnico en inglés | arreglado en 86a7acf |
 | BUG-007 | S4 | Dos filas pueden apuntar al mismo archivo; borrar el archivo desde una deja la otra sin archivo | no se arregla de momento (ver abajo) |
+| BUG-008 | S3 | El aviso de Smart Mode se repite al volver a la lista y se traga el Esc | arreglado en 55dc856 (antes de publicarse) |
+| BUG-009 | S4 | Smart Mode activado no se ve en color de acento | arreglado en 55dc856 (antes de publicarse) |
+| BUG-010 | S4 | La etiqueta "Frecuencia" descentra el selector en la cabecera de S05 | arreglado en 55dc856 + 0230030 (antes de publicarse) |
+| BUG-011 | S3 | Esc no vuelve a la lista si el foco está en la página | arreglado en f7cbb22 |
 
-Ningún S1 ni S2.
+Ningún S1 ni S2. BUG-008 a BUG-010 aparecieron al construir Smart Mode y Suscripciones y se arreglaron antes de guardarlos.
 
 ### BUG-001: Una descarga recién creada se queda en "En cola" mientras baja
 
@@ -121,6 +125,67 @@ Expected: discutible: avisar de que ya está bajado, o no duplicar la fila.
 Actual: las dos filas apuntan al mismo archivo (yt-dlp no lo vuelve a bajar); tras borrarlo desde una, "Abrir" en la otra dice "El archivo ya no está en su carpeta".
 Evidence: prueba `f01_e11_already_downloaded_finishes_with_the_same_file` (mismo `output_path`).
 Status: won't fix por ahora: el archivo lo borra el usuario a propósito y la otra fila lo explica bien. Mejor solución para más adelante: avisar al pegar un enlace ya descargado.
+
+### BUG-008: El aviso de Smart Mode se repite al volver a la lista
+
+- Severity: S3
+- Flow / case: F04 / F04-E3
+- Screen: S01
+- Build: sin publicar (segunda pasada de /replica-build)  Browser / device: app real (WebKitGTK) y Chromium 1.63
+
+Steps
+1. Con Smart Mode, pegar un video. 2. Ir a Suscripciones. 3. Volver con Esc.
+
+Expected: el aviso "En la cola con Smart Mode" sale una vez, al pegar.
+Actual: vuelve a salir, dos veces, cada vez que se vuelve a la lista; mientras está abierto, el primer Esc lo cierra a él en vez de cambiar de pantalla.
+Evidence: captura de la app real en Xvfb; e2e `F04-E3`.
+Suspected cause: el aviso se lanzaba desde un efecto de la ventana principal, que se repite al montarse (y dos veces en modo de desarrollo).
+Status: fixed in 55dc856 (se avisa desde una suscripción al estado, solo cuando cambia).
+
+### BUG-009: Smart Mode activado no se ve en color de acento
+
+- Severity: S4
+- Flow / case: F04 / F04-E4
+- Screen: S01
+- Build: sin publicar
+
+Steps
+1. Activar Smart Mode.
+
+Expected: el botón de la barra en color de acento (y con el rayo relleno).
+Actual: el rayo se rellena, pero el texto sigue blanco: el color de la variante "ghost" ganaba a la clase añadida.
+Evidence: e2e `F04-E4` (`Received: rgb(233, 235, 239)`).
+Status: fixed in 55dc856.
+
+### BUG-010: La etiqueta "Frecuencia" descentra el selector en la cabecera de S05
+
+- Severity: S4
+- Flow / case: F05 / F05-E3
+- Screen: S05
+- Build: sin publicar
+
+Steps
+1. Abrir Suscripciones.
+
+Expected: el selector centrado en la barra, como los botones.
+Actual: la etiqueta visible lo empuja 9,5 px hacia abajo y queda pegada al borde superior.
+Evidence: e2e `F05-E3`; captura de la app real.
+Status: fixed in 55dc856 + 0230030 (etiqueta solo para lectores de pantalla en barras).
+
+### BUG-011: Esc no vuelve a la lista si el foco está en la página
+
+- Severity: S3
+- Flow / case: navegación / NAV-E1
+- Screen: S05, S06, S07
+- Build: d3de251 en adelante
+
+Steps
+1. Abrir Suscripciones, Navegador o Preferencias. 2. Dejar el foco en la página (por ejemplo, tras pulsar un botón que desaparece). 3. Pulsar Esc.
+
+Expected: vuelve a la lista.
+Actual: no pasa nada: el Esc se escuchaba en el contenedor de la pantalla y no llega si el foco está en `<body>`.
+Evidence: e2e `NAV-E1` (fallaba siempre antes del arreglo).
+Status: fixed in f7cbb22 (se escucha en la ventana; sigue sin actuar si hay un diálogo, menú o lista abiertos).
 
 ## Por comprobar (no reproducido)
 

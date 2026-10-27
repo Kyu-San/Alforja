@@ -11,14 +11,14 @@ Abrir el archivo o mostrarlo en la carpeta,cola,must,yes,yes,"probado en la app 
 Mensajes de error claros (enlace no soportado / privado / bloqueado por región),cola,must,yes,yes,12 códigos traducidos; detalle técnico plegado
 Descargar una playlist completa,playlists,must,yes,yes,probado en la app real con un RSS local de 2 videos
 Elegir qué videos de la playlist descargar,playlists,should,yes,yes,"casillas, filtro, seleccionar todo; lista virtualizada para miles"
-Descargar un canal completo,playlists,should,yes,partial,la URL /videos de un canal funciona como lista; la raíz del canal (@nombre) devuelve pestañas y aún no se trata
+Descargar un canal completo,playlists,should,yes,partial,"la raíz de un canal (@nombre) sigue su pestaña de videos; probado solo con un JSON simulado de pestañas, nunca contra YouTube"
 Subtítulos en SRT con elección de idioma,subtítulos,should,yes,yes,"probado con el motor real: .es.srt con acentos, solo el idioma pedido (f06_h2)"
 Incrustar subtítulos en el video,subtítulos,could,yes,yes,probado con el motor real: el .mkv lleva pista de subtítulos (ffprobe)
 Pista de audio original o de otro idioma,descarga,should,yes,partial,añadido en 25.1 / gratis desde 25.2 | selector ba[language^=xx] con caída; sin video local con varias pistas para probarlo
-Smart Mode: guardar preferencias y descargar con un clic,smart mode,should,yes,no,pantalla que explica que llega en la próxima versión
-Suscribirse a un canal o playlist y bajar lo nuevo automáticamente,suscripciones,should,yes,no,pantalla que explica que llega en la próxima versión
+Smart Mode: guardar preferencias y descargar con un clic,smart mode,should,yes,yes,"S08: tipo, calidad, formato, subtítulos y carpeta; pegar un video = a la cola sin diálogo; las listas abren S04 con esas opciones. Probado en la app real"
+Suscribirse a un canal o playlist y bajar lo nuevo automáticamente,suscripciones,should,yes,yes,S05 + Suscribirse en S04; lo que ya existía no se baja; comprobación cada 1–72 h (y al arrancar) mirando las 30 últimas; sin duplicados. Probado con motor real y en la app real
 Descargas simultáneas configurables,cola,should,yes,yes,1–10; prueba de integración del límite
-Preferencias: carpeta / idioma / descargas simultáneas / proxy,preferencias,should,yes,partial,"carpeta, simultáneas, plantilla de nombre, proxy y sesión del navegador; falta idioma de la interfaz"
+Preferencias: carpeta / idioma / descargas simultáneas / proxy,preferencias,should,yes,partial,"carpeta, simultáneas, plantilla de nombre, proxy, sesión del navegador y aviso al terminar; falta idioma de la interfaz"
 Actualizar yt-dlp desde la app,mantenimiento,should,no,yes,"no está en el original; aquí es necesario porque YouTube rompe los descargadores a menudo | GitHub Releases con SHA-256, volver atrás, comprobación diaria e instalación si falta; probado en la app real"
 Usar tu propia sesión del navegador para tus playlists privadas o Ver más tarde,cuenta,could,yes,partial,solo tu propia cuenta (yt-dlp --cookies-from-browser) | ajuste guardado y pasado a yt-dlp (--cookies-from-browser); sin probar con un perfil real
 Navegador integrado para buscar y descargar,navegador,could,yes,no,pantalla que lo explica
@@ -30,3 +30,5 @@ Recomendaciones de videos similares en la app,descubrimiento,could,yes,skip,no a
 Sistema de licencias / planes / activación por dispositivo,licencias,could,yes,skip,es uso personal: no hay nada que vender
 Límites del plan gratuito y anuncios,licencias,could,yes,skip,es su modelo de negocio; no es una función
 Saltarse protecciones de login de YouTube,fuentes,could,yes,skip,elusión de medidas técnicas: no se construye
+Recordar la última elección del diálogo,descarga,should,no,yes,"no comprobado en el original; añadido tras /replica-diff (por equipo, localStorage)"
+Notificación del sistema al terminar,cola,should,no,yes,no comprobado en el original; con la ventana en segundo plano; se puede apagar en Preferencias

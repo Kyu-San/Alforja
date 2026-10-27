@@ -1,37 +1,37 @@
 # Paridad: Descargador frente a 4K Video Downloader+
 
-Fecha: 2026-10-27  Build: 83a28cf + matriz actualizada  Plataforma probada: Linux
+Fecha: 2026-10-27 (segunda pasada)  Build: 0230030  Plataforma probada: Linux
 
 ## Resumen
 
 | medida | valor |
 | --- | --- |
-| **Paridad de funciones** | **80,0 / 100** (25 funciones puntuadas) |
+| **Paridad de funciones** | **87,3 / 100** (25 funciones puntuadas; antes 80,0) |
 | Imprescindibles | **11 de 11** |
 | Paridad de diseño | **sin medir**: no hay capturas del original en `replica/screens/` |
 | Bugs abiertos | 0 S1, 0 S2, 0 S3, 1 S4 (BUG-007) |
-| Puntuación global | 80,0 (solo funciones; el diseño no entra porque no se ha medido) |
+| Pruebas | 36 en Rust (motor real) + 41 de interfaz con axe, estables en 3 pasadas seguidas |
+| Puntuación global | 87,3 (solo funciones; el diseño no entra porque no se ha medido) |
 
-**Veredicto: utilizable para uso personal en Linux, justo en el límite.** Cumple las
-reglas de "shippable" (todas las imprescindibles, 80+ de funciones, sin S1 ni S2),
-pero por los pelos (80,0 exacto) y con tres reservas que pesan más que la cifra:
+**Veredicto: utilizable para uso personal en Linux.** Cumple las reglas de
+"shippable" con margen (todas las imprescindibles, 87,3 de funciones, sin S1 ni
+S2). Ya hace lo que define al original: Smart Mode y suscripciones. Quedan dos
+reservas que pesan más que la cifra:
 
-1. **Nunca se ha probado contra YouTube real.** YouTube y GitHub están bloqueados en
-   el entorno donde se construyó; todo el motor se probó con MP4, HLS, RSS y páginas
-   `<video>` servidos en local. Es lo primero que hay que hacer en tu equipo.
+1. **Nunca se ha probado contra YouTube real.** YouTube y GitHub están bloqueados
+   en el entorno donde se construyó; todo el motor se probó con MP4, HLS, RSS y
+   páginas `<video>` servidos en local. Es lo primero que hay que hacer en tu equipo.
 2. **Solo Linux.** Windows y macOS no se han ejecutado nunca.
-3. **No es "mejor que el original"**: falta `/replica-entrepreneur`, y la función
-   más característica del original (Smart Mode, descargar con un clic) no existe.
+
+Aún no es "mejor que el original": para eso falta `/replica-entrepreneur`.
 
 ## Funciones
 
-### Parity: 80.0 / 100
+### Parity: 87.3 / 100
 
-features 80.0  (25 counted, must-haves 11 of 11 done)
+features 87.3  (25 counted, must-haves 11 of 11 done)
 
 ### By area, weakest first
-- smart mode                     0.0  (1 features)
-- suscripciones                  0.0  (1 features)
 - navegador                      0.0  (1 features)
 - preferencias                  50.0  (1 features)
 - cuenta                        50.0  (1 features)
@@ -40,13 +40,13 @@ features 80.0  (25 counted, must-haves 11 of 11 done)
 - descarga                      90.5  (8 features)
 - cola                          93.3  (6 features)
 - subtítulos                   100.0  (2 features)
+- smart mode                   100.0  (1 features)
+- suscripciones                100.0  (1 features)
 
 ### Missing, in build order
-- [should] smart mode: Smart Mode: guardar preferencias y descargar con un clic, no  (pantalla que explica que llega en la próxima versión)
-- [should] suscripciones: Suscribirse a un canal o playlist y bajar lo nuevo automáticamente, no  (pantalla que explica que llega en la próxima versión)
 - [should] descarga: Pista de audio original o de otro idioma, partial  (añadido en 25.1 / gratis desde 25.2 | selector ba[language^=xx] con caída; sin video local con varias pistas para probarlo)
-- [should] playlists: Descargar un canal completo, partial  (la URL /videos de un canal funciona como lista; la raíz del canal (@nombre) devuelve pestañas y aún no se trata)
-- [should] preferencias: Preferencias: carpeta / idioma / descargas simultáneas / proxy, partial  (carpeta, simultáneas, plantilla de nombre, proxy y sesión del navegador; falta idioma de la interfaz)
+- [should] playlists: Descargar un canal completo, partial  (la raíz de un canal (@nombre) sigue su pestaña de videos; probado solo con un JSON simulado de pestañas, nunca contra YouTube)
+- [should] preferencias: Preferencias: carpeta / idioma / descargas simultáneas / proxy, partial  (carpeta, simultáneas, plantilla de nombre, proxy, sesión del navegador y aviso al terminar; falta idioma de la interfaz)
 - [could] cola: Exportar / importar la lista de descargas, no
 - [could] descarga: Videos 360° / VR y 3D, no
 - [could] navegador: Navegador integrado para buscar y descargar, no  (pantalla que lo explica)
@@ -62,6 +62,8 @@ features 80.0  (25 counted, must-haves 11 of 11 done)
 
 ### Yours, not in the original (not scored)
 - Actualizar yt-dlp desde la app
+- Recordar la última elección del diálogo
+- Notificación del sistema al terminar
 
 ## Diseño (layout)
 
@@ -84,14 +86,14 @@ a mano). "Sin comprobar" = las fuentes no lo dicen.
 
 | flujo | el original | el clon | arreglar o dejar |
 | --- | --- | --- | --- |
-| F01 bajar un video | Pegar → diálogo → Descargar: 2 clics; con Smart Mode, 1 | Pegar → diálogo → Descargar: 2 clics (o Ctrl+V + Intro). Sin Smart Mode | **arreglar**: Smart Mode |
-| F01 opciones del diálogo | sin comprobar si recuerda la última elección | **no recuerda**: cada vez vuelve a "la mejor, MP4" | **arreglar**: recordar la última elección |
+| F01 bajar un video | Pegar → diálogo → Descargar: 2 clics; con Smart Mode, 1 | igual: 2 clics, o 1 con Smart Mode (también Ctrl+V) | hecho |
+| F01 opciones del diálogo | sin comprobar si recuerda la última elección | recuerda la última elección (si el video no tiene esa calidad, la mejor que haya) | hecho |
 | F01 calidad no disponible | reseñas: se queda en 1080p sin decirlo | baja la mejor por debajo y lo dice en la fila ("1080p (no había 2160p)") | dejar: mejor que el original |
 | F01 errores | reseñas: errores "403", descargas atascadas | 12 errores con mensaje propio, detalle técnico plegado, Reintentar; aviso tras 3 fallos seguidos del motor | dejar |
-| F01 al terminar | sin comprobar | solo un aviso dentro de la app si estaba en segundo plano; **sin notificación del sistema** (el ajuste existe, no se usa) | **arreglar** |
+| F01 al terminar | sin comprobar | notificación del sistema si la ventana no está delante (se puede apagar) | hecho |
 | F03 listas | paywall: 10 videos por lista en el plan gratis | sin límite; lista virtualizada (2.000 sin problema), subcarpeta con el nombre | dejar |
-| F03 canales | canal completo | la pestaña `/videos` sí; la raíz `@nombre` no | **arreglar** |
-| F05 suscripciones | sí | no (pantalla que lo explica) | **arreglar** |
+| F03 canales | canal completo | la raíz `@nombre` sigue la pestaña de videos | hecho, **sin probar con YouTube** |
+| F05 suscripciones | sí | sí: no baja lo que ya había, frecuencia de 1 h a 3 días, pausar, comprobar ahora | hecho |
 | F07 cerrar a mitad | sin comprobar | al reabrir vuelve a la cola y continúa desde el `.part` | dejar |
 | F09 motor | se actualiza con la app, oculto | actualización visible, verificada con SHA-256, con vuelta atrás | dejar: mejor que el original |
 | límites | plan gratis: ~10 descargas al día, anuncios | ninguno (uso personal) | dejar |
@@ -99,17 +101,14 @@ a mano). "Sin comprobar" = las fuentes no lo dicen.
 
 ## Lo siguiente, por orden
 
-1. **Probarlo en tu equipo con YouTube de verdad** (no es construir, pero va
-   primero): un video, uno en 4K, una lista, uno con subtítulos. Lo que falle
-   va a `replica/bugs.md`.
-2. **Smart Mode** (debería): elegir formato, calidad, subtítulos y carpeta una vez
-   y descargar cada enlace pegado sin diálogo. Ya existen la tabla `presets`, el
-   índice "solo un Smart Mode" y la pantalla S08 que lo explica.
-3. **Recordar la última elección del diálogo y notificar al terminar**: pequeño y
-   se nota en cada uso (`tauri-plugin-notification`; el ajuste `notify_on_finish` ya existe).
-4. **Suscripciones** (debería): la tabla, el índice que evita duplicados y la
-   comprobación periódica ya están diseñados en `architecture.md`.
-5. **La raíz de un canal (`@nombre`)**: seguir la pestaña "Videos" cuando yt-dlp
-   devuelve pestañas en vez de videos.
+1. **Probarlo en tu equipo con YouTube de verdad**: un video, uno en 4K, una
+   lista, un canal por su raíz (`@nombre`), uno con subtítulos y una suscripción.
+   Lo que falle va a `replica/bugs.md`.
+2. **Probarlo en Windows o macOS**, si lo vas a usar ahí: matar descargas en
+   pausa (`taskkill`), rutas largas, el binario de yt-dlp descargado.
+3. **Idioma de la interfaz** (lo único que falta en Preferencias).
+4. **Pista de audio en otro idioma**: está hecha, falta un video con varias pistas para probarla.
+5. **`/replica-entrepreneur`**: decidir qué hacer mejor que el original.
 
-Con 2 y 4 la paridad pasaría de 80 a unos 87 (48 de 55 puntos ponderados); con el 5, a 89. Los puntos 1 y 3 no suben la cifra, pero son los que más se notan al usarla.
+El navegador integrado (opcional) queda fuera a propósito por ahora: copiar el
+enlace del navegador de siempre y pegarlo cubre lo mismo.

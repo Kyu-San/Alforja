@@ -145,3 +145,11 @@ alter table downloads add column actual_quality text;
 
 -- Migración 0003 (durante /replica-backend): última versión del motor vista.
 alter table settings add column engine_latest_version text;
+
+-- Migración 0004 (segunda pasada de /replica-build): videos vistos por suscripción.
+create table subscription_seen (
+  subscription_id text not null references subscriptions(id) on delete cascade,
+  video_id        text not null,
+  seen_at         text not null default (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  primary key (subscription_id, video_id)
+);
