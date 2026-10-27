@@ -1,4 +1,6 @@
-import { CircleAlert, Download as DownloadIcon, Film, ListVideo, Music } from "lucide-react";
+import { CircleAlert, Download as DownloadIcon, Film, ListVideo, Music, Rss } from "lucide-react";
+import { Tooltip } from "../components/ui/Tooltip";
+import { navigate } from "../lib/router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, type MediaInfo, type PlaylistInfo } from "../api";
 import { Button } from "../components/ui/Button";
@@ -14,7 +16,9 @@ import {
   audioContainers,
   audioQualities,
   audioTrackOptions,
-  defaultChoice,
+  choiceFromOptions,
+  loadLastChoice,
+  saveLastChoice,
   Destination,
   KindToggle,
   ORIGINAL_AUDIO,
@@ -136,7 +140,9 @@ function MediaHeader({ title, subtitle, thumbnail, icon }: { title: string; subt
 
 function useChoice() {
   const outputDir = useStore((s) => s.settings?.outputDir ?? "");
-  return useState<Choice>(() => defaultChoice(outputDir));
+  const smart = useStore((s) => s.smart);
+  // Con Smart Mode, sus opciones; si no, las de la última descarga.
+  return useState<Choice>(() => (smart?.isSmartMode ? choiceFromOptions(smart.options, outputDir) : loadLastChoice(outputDir)));
 }
 
 /** S03: un video. */
@@ -146,14 +152,16 @@ function VideoDialog({ info, onOpenChange }: { info: MediaInfo; onOpenChange: (o
   const [busy, setBusy] = useState(false);
   const set = (p: Partial<Choice>) => setC((x) => ({ ...x, ...p }));
   useEffect(() => {
-    // Por defecto, la mejor calidad que haya.
-    set({ videoQuality: info.qualities[0] ? `${info.qualities[0].height}p` : "best" });
+    // La calidad recordada solo vale si este video la tiene; si no, la mejor que haya.
+    const has = (q: string) => info.qualities.some((x) => `${x.height}p` === q);
+    setC((x) => (has(x.videoQuality) ? x : { ...x, videoQuality: info.qualities[0] ? `${info.qualities[0].height}p` : "best" }));
   }, [info.url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const start = async () => {
     setBusy(true);
     try {
       const d = await api.startDownload(info.url, toOptions(c));
+      saveLastChoice(c);
       useStore.getState().add(d);
       onOpenChange(false);
       focusDownload(d.id);
@@ -240,11 +248,32 @@ function PlaylistDialog({ info, onOpenChange }: { info: PlaylistInfo; onOpenChan
   const first = Math.max(0, Math.floor(scrollTop / ROW) - 4);
   const last = Math.min(visible.length, Math.ceil((scrollTop + viewH) / ROW) + 4);
 
+  const [subscribing, setSubscribing] = useState(false);
+  const subscribeNow = async () => {
+    setSubscribing(true);
+    try {
+      const s = await api.subscribe(info.url, toOptions(c));
+      saveLastChoice(c);
+      onOpenChange(false);
+      toast({
+        kind: "success",
+        title: `Suscrito a «${s.title}»`,
+        body: "Los videos nuevos se bajarán solos. Los que ya había no se descargan; si quieres alguno, vuelve a pegar el enlace.",
+        action: { label: "Ver suscripciones", run: () => navigate("/suscripciones") },
+      });
+    } catch (e) {
+      toast({ kind: "error", title: "No se pudo suscribir", body: message(e) });
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   const start = async () => {
     setBusy(true);
     try {
       const ids = info.entries.filter((e) => selected.has(e.id)).map((e) => e.id);
       const ds = await api.startPlaylistDownload(info.url, ids, toOptions(c));
+      saveLastChoice(c);
       ds.forEach(useStore.getState().add);
       onOpenChange(false);
       if (ds[0]) focusDownload(ds[0].id);
@@ -270,6 +299,11 @@ function PlaylistDialog({ info, onOpenChange }: { info: PlaylistInfo; onOpenChan
           <span className="mr-auto text-sm text-muted tabular" aria-live="polite">
             {selected.size} de {info.entries.length} seleccionados
           </span>
+          <Tooltip label="Bajar solo los videos nuevos que vayan saliendo, con este formato">
+            <Button icon={<Rss className="size-4" />} onClick={subscribeNow} loading={subscribing} disabled={busy}>
+              Suscribirse
+            </Button>
+          </Tooltip>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>

@@ -31,6 +31,17 @@ export function clock(s: number | null | undefined): string | null {
 export const percent = (done: number, total: number | null | undefined) =>
   total && total > 0 ? Math.max(0, Math.min(100, Math.floor((done / total) * 100))) : null;
 
+const rtf = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
+/** "hace 5 minutos", "ayer"… */
+export function ago(iso: string, now = Date.now()): string {
+  const s = Math.round((new Date(iso).getTime() - now) / 1000);
+  const abs = Math.abs(s);
+  if (abs < 60) return "hace un momento";
+  if (abs < 3600) return rtf.format(Math.round(s / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.round(s / 3600), "hour");
+  return rtf.format(Math.round(s / 86400), "day");
+}
+
 export function qualityLabel(height: number): string {
   if (height >= 4320) return `${height}p 8K`;
   if (height >= 2160) return `${height}p 4K`;
