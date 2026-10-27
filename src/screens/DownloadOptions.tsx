@@ -35,6 +35,46 @@ export const defaultChoice = (outputDir: string): Choice => ({
   outputDir,
 });
 
+const LAST = "descargador.ultima-eleccion";
+
+/** La elección de la última descarga (sin la carpeta, que sale de los ajustes). */
+export function loadLastChoice(outputDir: string): Choice {
+  const base = defaultChoice(outputDir);
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAST) ?? "null");
+    if (!saved || typeof saved !== "object") return base;
+    return {
+      ...base,
+      kind: saved.kind === "audio" ? "audio" : "video",
+      videoContainer: saved.videoContainer === "mkv" ? "mkv" : "mp4",
+      audioContainer: ["mp3", "m4a", "ogg"].includes(saved.audioContainer) ? saved.audioContainer : "mp3",
+      videoQuality: typeof saved.videoQuality === "string" ? saved.videoQuality : base.videoQuality,
+      audioQuality: typeof saved.audioQuality === "string" ? saved.audioQuality : base.audioQuality,
+      subtitleLangs: Array.isArray(saved.subtitleLangs) ? saved.subtitleLangs.filter((l: unknown) => typeof l === "string") : [],
+      subtitlesEmbedded: !!saved.subtitlesEmbedded,
+    };
+  } catch {
+    return base;
+  }
+}
+
+export function saveLastChoice(c: Choice) {
+  try {
+    const { outputDir: _dir, audioLang: _lang, ...rest } = c;
+    localStorage.setItem(LAST, JSON.stringify(rest));
+  } catch {
+    // Sin almacenamiento: la próxima vez sale la elección por defecto.
+  }
+}
+
+/** Una elección a partir de unas opciones guardadas (Smart Mode, suscripción). */
+export function choiceFromOptions(o: { kind: Kind; container: string; quality: string; subtitleLangs?: string[]; subtitlesEmbedded?: boolean; outputDir?: string | null }, outputDir: string): Choice {
+  const c = defaultChoice(o.outputDir || outputDir);
+  return o.kind === "audio"
+    ? { ...c, kind: "audio", audioContainer: o.container as Choice["audioContainer"], audioQuality: o.quality }
+    : { ...c, kind: "video", videoContainer: o.container as Choice["videoContainer"], videoQuality: o.quality, subtitleLangs: o.subtitleLangs ?? [], subtitlesEmbedded: !!o.subtitlesEmbedded };
+}
+
 export function toOptions(c: Choice) {
   return c.kind === "video"
     ? { kind: c.kind, container: c.videoContainer, quality: c.videoQuality, audioLang: c.audioLang, subtitleLangs: c.subtitleLangs, subtitlesEmbedded: c.subtitlesEmbedded, outputDir: c.outputDir }

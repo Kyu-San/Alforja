@@ -5,8 +5,10 @@ import { TooltipProvider } from "./components/ui/Tooltip";
 import { navigate, useRoute } from "./lib/router";
 import { MainWindow } from "./screens/MainWindow";
 import { PasteDialog } from "./screens/PasteDialog";
+import { useFlow } from "./screens/pasteFlow";
 import { Preferences } from "./screens/Preferences";
-import { BrowserScreen, SubscriptionsScreen } from "./screens/Stubs";
+import { BrowserScreen } from "./screens/Stubs";
+import { SubscriptionsScreen } from "./screens/Subscriptions";
 import { useStore } from "./store";
 
 function Routes() {
@@ -37,7 +39,10 @@ function Events() {
         if (e.type !== "download" || prev?.status === e.download.status) return;
         if (e.download.status === "done") {
           errorsInARow = 0;
-          if (document.hidden) toast({ kind: "success", title: "Descarga terminada", body: e.download.title ?? undefined });
+          // Con la ventana en segundo plano: notificación del sistema (si está activada).
+          if (!document.hasFocus() && useStore.getState().settings?.notifyOnFinish) {
+            api.notify("Descarga terminada", e.download.title ?? undefined);
+          }
         } else if (e.download.status === "error" && ["engine", "http_403"].includes(e.download.errorCode ?? "")) {
           // Varios fallos seguidos del motor suelen significar que hay que actualizarlo.
           if (++errorsInARow === 3) {
@@ -48,6 +53,16 @@ function Events() {
       .then((f) => (off = f));
     return () => off?.();
   }, [apply, toast]);
+  // Aviso cuando Smart Mode pone un video en la cola sin diálogo: solo cuando
+  // cambia (no al volver a montar una pantalla).
+  useEffect(
+    () =>
+      useFlow.subscribe((s, prev) => {
+        const d = s.smartStarted;
+        if (d && d !== prev.smartStarted) toast({ kind: "success", title: "En la cola con Smart Mode", body: d.title ?? d.sourceUrl });
+      }),
+    [toast],
+  );
   // Ctrl/Cmd+, abre las preferencias desde cualquier pantalla.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

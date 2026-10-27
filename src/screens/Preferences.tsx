@@ -76,6 +76,9 @@ function General() {
           options={Array.from({ length: 10 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))}
         />
       </Row>
+      <Row label="Avisar al terminar" htmlFor="notify" help="Una notificación del sistema cuando acaba una descarga y la ventana no está delante.">
+        <Switch id="notify" label="Avisar al terminar" checked={s.notifyOnFinish} onChange={(v) => save("notifyOnFinish", { notifyOnFinish: v })} />
+      </Row>
       <Row
         label="Nombre de los archivos"
         htmlFor="tpl"

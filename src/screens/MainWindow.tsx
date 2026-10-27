@@ -16,7 +16,7 @@ import { navigate } from "../lib/router";
 import { useStore, visibleDownloads } from "../store";
 import { DownloadItem, useDownloadActions } from "./DownloadItem";
 import { pasteFromClipboard } from "./pasteFlow";
-import { SmartModeDialog } from "./Stubs";
+import { SmartModeDialog } from "./SmartMode";
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 export const mod = isMac ? "⌘" : "Ctrl";
@@ -27,6 +27,7 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
   const remove = useStore((s) => s.remove);
   const toast = useToast();
   const [smart, setSmart] = useState(false);
+  const smartOn = useStore((s) => !!s.smart?.isSmartMode);
   const engineUpdate = useStore((s) => !!s.engine?.updateAvailable);
   return (
     <header>
@@ -36,9 +37,11 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
           Pegar enlace
         </Button>
       </Tooltip>
-      <Button variant="ghost" icon={<Zap className="size-4" />} onClick={() => setSmart(true)} className="font-medium">
-        Smart Mode
-      </Button>
+      <Tooltip label={smartOn ? "Cada video que pegues se descarga directamente. Clic para cambiarlo." : "Descargar con un clic, sin diálogo"}>
+        <Button variant="ghost" icon={<Zap className={smartOn ? "size-4 fill-current" : "size-4"} />} onClick={() => setSmart(true)} className={smartOn ? "font-medium text-accent!" : "font-medium"} aria-pressed={smartOn}>
+          Smart Mode{smartOn ? <span className="sr-only"> (activado)</span> : null}
+        </Button>
+      </Tooltip>
       <div className="flex-1" />
       <SearchField ref={searchRef} className="w-56" label="Buscar en la lista" placeholder="Buscar en la lista" value={search} onChange={setSearch} />
       <IconButton label="Suscripciones" icon={<Rss className="size-5" />} onClick={() => navigate("/suscripciones")} />

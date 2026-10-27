@@ -7,9 +7,9 @@ import { cn } from "./cn";
 import { Button } from "./Button";
 import { middleEllipsis } from "../../lib/format";
 
-export function Label({ htmlFor, children, id }: { htmlFor?: string; children: ReactNode; id?: string }) {
+export function Label({ htmlFor, children, id, hidden }: { htmlFor?: string; children: ReactNode; id?: string; hidden?: boolean }) {
   return (
-    <label id={id} htmlFor={htmlFor} className="mb-1 block text-xs text-muted">
+    <label id={id} htmlFor={htmlFor} className={hidden ? "sr-only" : "mb-1 block text-xs text-muted"}>
       {children}
     </label>
   );
@@ -94,12 +94,15 @@ export interface Option {
   disabled?: boolean;
 }
 
-export function Select({ label, value, onChange, options, disabled, placeholder, className }: { label: string; value: string; onChange: (v: string) => void; options: Option[]; disabled?: boolean; placeholder?: string; className?: string }) {
+/** `hideLabel`: la etiqueta solo para lectores de pantalla (en barras donde no cabe). */
+export function Select({ label, value, onChange, options, disabled, placeholder, className, hideLabel }: { label: string; value: string; onChange: (v: string) => void; options: Option[]; disabled?: boolean; placeholder?: string; className?: string; hideLabel?: boolean }) {
   const id = useId();
   const triggerId = useId();
   return (
     <div className={cn("min-w-0", className)}>
-      <Label id={id}>{label}</Label>
+      <Label id={id} hidden={hideLabel}>
+        {label}
+      </Label>
       <S.Root value={value} onValueChange={onChange} disabled={disabled}>
         <S.Trigger id={triggerId} aria-labelledby={`${id} ${triggerId}`} className={cn(fieldBase, "flex items-center justify-between gap-2 text-left data-[state=open]:border-accent")}>
           <span className="truncate">

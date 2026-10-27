@@ -78,6 +78,29 @@ export interface PlaylistInfo {
 
 export type ParseResult = ({ type: "video" } & MediaInfo) | ({ type: "playlist" } & PlaylistInfo);
 
+export interface Preset {
+  id: string;
+  name: string;
+  options: DownloadOptions;
+  isSmartMode: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  sourceUrl: string;
+  title: string;
+  kind: "playlist" | "channel";
+  enabled: boolean;
+  preset: Preset;
+  lastCheckedAt: string | null;
+  lastError: string | null;
+  downloadCount: number;
+  createdAt: string;
+}
+
+/** Pegar con Smart Mode: la descarga ya en la cola, o la lista para elegir. */
+export type SmartResult = { type: "started"; download: Download } | { type: "playlist"; info: PlaylistInfo };
+
 export interface Settings {
   outputDir: string;
   maxConcurrent: number;
@@ -115,7 +138,8 @@ export type AppEvent =
   | { type: "progress"; id: string; downloadedBytes: number; totalBytes: number | null; speed: number | null; etaS: number | null }
   | { type: "download"; download: Download }
   | { type: "removed"; id: string }
-  | { type: "engine"; status: EngineStatus };
+  | { type: "engine"; status: EngineStatus }
+  | { type: "subscriptionChecked"; id: string; newDownloads: number };
 
 export interface AppError { code: string; message: string }
 
@@ -145,6 +169,17 @@ export interface Api {
   engineCheck(): Promise<EngineStatus>;
   engineUpdate(): Promise<EngineStatus>;
   engineRollback(): Promise<EngineStatus>;
+  getSmartMode(): Promise<Preset | null>;
+  saveSmartMode(options: DownloadOptions, enabled: boolean): Promise<Preset>;
+  smartDownload(url: string): Promise<SmartResult>;
+  subscribe(url: string, options: DownloadOptions): Promise<Subscription>;
+  listSubscriptions(): Promise<Subscription[]>;
+  setSubscriptionEnabled(id: string, enabled: boolean): Promise<Subscription>;
+  unsubscribe(id: string): Promise<void>;
+  /** Devuelve cuántos videos nuevos puso en la cola. */
+  checkSubscriptionNow(id: string): Promise<number>;
+  /** Notificación del sistema (no hace nada si no hay permiso). */
+  notify(title: string, body?: string): Promise<void>;
   onEvent(cb: (e: AppEvent) => void): Promise<() => void>;
   readClipboard(): Promise<string | null>;
   pickFolder(current: string): Promise<string | null>;

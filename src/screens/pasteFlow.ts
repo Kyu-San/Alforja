@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import { api, type ParseResult } from "../api";
+import { api, type Download, type ParseResult } from "../api";
 import { message } from "../lib/errors";
+import { focusDownload, useStore } from "../store";
 
 // El recorrido de un enlace: escribirlo (si el portapapeles no tenía uno),
 // analizarlo (S02) y elegir qué bajar (S03 video / S04 lista).
@@ -12,6 +13,8 @@ interface Flow {
   result: ParseResult | null;
   error: string | null;
   token: number;
+  /** La última descarga que Smart Mode puso en la cola sin diálogo (para avisar). */
+  smartStarted: Download | null;
   openInput: (prefill?: string) => void;
   analyze: (url: string) => Promise<void>;
   close: () => void;
@@ -25,14 +28,29 @@ export const useFlow = create<Flow>((set, get) => ({
   result: null,
   error: null,
   token: 0,
+  smartStarted: null,
   openInput: (prefill = "") => set({ stage: "input", url: prefill, error: null, result: null }),
   analyze: async (raw) => {
     const url = raw.trim();
     const token = get().token + 1;
     set({ stage: "parsing", url, error: null, result: null, token });
+    const current = () => get().token === token && get().stage === "parsing";
     try {
+      // Smart Mode: un video va directo a la cola; una lista sigue a S04.
+      if (useStore.getState().smart?.isSmartMode) {
+        const r = await api.smartDownload(url);
+        if (!current()) return;
+        if (r.type === "started") {
+          useStore.getState().add(r.download);
+          set({ stage: "closed", smartStarted: r.download });
+          focusDownload(r.download.id);
+        } else {
+          set({ stage: "ready", result: { type: "playlist", ...r.info } });
+        }
+        return;
+      }
       const result = await api.parseUrl(url);
-      if (get().token === token && get().stage === "parsing") set({ stage: "ready", result });
+      if (current()) set({ stage: "ready", result });
     } catch (e) {
       if (get().token === token && get().stage === "parsing") set({ stage: "error", error: message(e) });
     }

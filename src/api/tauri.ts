@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { open } from "@tauri-apps/plugin-dialog";
+import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import type { Api, AppEvent } from "./types";
 
 export const tauriApi: Api = {
@@ -24,6 +25,23 @@ export const tauriApi: Api = {
   engineCheck: () => invoke("engine_check"),
   engineUpdate: () => invoke("engine_update"),
   engineRollback: () => invoke("engine_rollback"),
+  getSmartMode: () => invoke("get_smart_mode"),
+  saveSmartMode: (options, enabled) => invoke("save_smart_mode", { options, enabled }),
+  smartDownload: (url) => invoke("smart_download", { url }),
+  subscribe: (url, options) => invoke("subscribe", { url, options }),
+  listSubscriptions: () => invoke("list_subscriptions"),
+  setSubscriptionEnabled: (id, enabled) => invoke("set_subscription_enabled", { id, enabled }),
+  unsubscribe: (id) => invoke("unsubscribe", { id }),
+  checkSubscriptionNow: (id) => invoke("check_subscription_now", { id }),
+  notify: async (title, body) => {
+    try {
+      let ok = await isPermissionGranted();
+      if (!ok) ok = (await requestPermission()) === "granted";
+      if (ok) sendNotification({ title, body });
+    } catch {
+      // Sin servicio de notificaciones: no es un error para el usuario.
+    }
+  },
   onEvent: (cb) => listen<AppEvent>("app-event", (e) => cb(e.payload)),
   readClipboard: async () => {
     try {
