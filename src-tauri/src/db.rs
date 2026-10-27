@@ -12,6 +12,7 @@ const MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0001_init.sql"),
     include_str!("../migrations/0002_actual_quality.sql"),
     include_str!("../migrations/0003_engine_latest.sql"),
+    include_str!("../migrations/0004_subscription_seen.sql"),
 ];
 
 const DOWNLOAD_COLUMNS: &str = "id, source_url, video_id, extractor, title, uploader, thumbnail_url, duration_s, \
@@ -35,6 +36,8 @@ pub struct NewDownload {
     pub duration_s: Option<i64>,
     pub size_bytes: Option<i64>,
     pub playlist_id: Option<String>,
+    pub subscription_id: Option<String>,
+    pub preset_id: Option<String>,
 }
 
 fn now() -> String {
@@ -73,6 +76,24 @@ fn row_to_download(r: &Row) -> rusqlite::Result<Download> {
         preset_id: r.get(26)?,
         created_at: r.get(27)?,
         finished_at: r.get(28)?,
+    })
+}
+
+fn row_to_preset(r: &Row) -> rusqlite::Result<Preset> {
+    let subs: String = r.get(6)?;
+    Ok(Preset {
+        id: r.get(0)?,
+        name: r.get(1)?,
+        options: DownloadOptions {
+            kind: Kind::parse(&r.get::<_, String>(2)?),
+            container: r.get(3)?,
+            quality: r.get(4)?,
+            audio_lang: r.get(5)?,
+            subtitle_langs: serde_json::from_str(&subs).unwrap_or_default(),
+            subtitles_embedded: r.get::<_, i64>(7)? == 1,
+            output_dir: r.get(8)?,
+        },
+        is_smart_mode: r.get::<_, i64>(9)? == 1,
     })
 }
 
@@ -190,6 +211,138 @@ impl Db {
         )?)
     }
 
+    // ---------- presets (Smart Mode y suscripciones) ----------
+
+    pub fn get_preset(&self, id: &str) -> AppResult<Option<Preset>> {
+        Ok(self
+            .conn()
+            .query_row(
+                "select id, name, kind, container, quality, audio_lang, subtitle_langs, subtitles_embedded, output_dir, is_smart_mode from presets where id = ?1",
+                [id],
+                row_to_preset,
+            )
+            .optional()?)
+    }
+
+    /// Crea o sustituye un preset con id fijo (o nuevo si `id` es None).
+    pub fn save_preset(&self, id: Option<&str>, name: &str, o: &DownloadOptions, is_smart_mode: bool) -> AppResult<Preset> {
+        let id = id.map(str::to_string).unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+        self.conn().execute(
+            "insert into presets (id, name, kind, container, quality, audio_lang, subtitle_langs, subtitles_embedded, output_dir, is_smart_mode) \
+             values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) \
+             on conflict(id) do update set name = excluded.name, kind = excluded.kind, container = excluded.container, \
+             quality = excluded.quality, audio_lang = excluded.audio_lang, subtitle_langs = excluded.subtitle_langs, \
+             subtitles_embedded = excluded.subtitles_embedded, output_dir = excluded.output_dir, is_smart_mode = excluded.is_smart_mode",
+            params![
+                id, name, o.kind.as_str(), o.container, o.quality, o.audio_lang,
+                serde_json::to_string(&o.subtitle_langs).unwrap_or_else(|_| "[]".into()),
+                o.subtitles_embedded as i64, o.output_dir, is_smart_mode as i64
+            ],
+        )?;
+        Ok(self.get_preset(&id)?.expect("recién guardado"))
+    }
+
+    pub fn delete_preset_if_unused(&self, id: &str) -> AppResult<()> {
+        self.conn().execute(
+            "delete from presets where id = ?1 and is_smart_mode = 0 and not exists (select 1 from subscriptions where preset_id = ?1)",
+            [id],
+        )?;
+        Ok(())
+    }
+
+    // ---------- suscripciones ----------
+
+    pub fn insert_subscription(&self, url: &str, title: &str, kind: &str, preset_id: &str) -> AppResult<Subscription> {
+        let id = uuid::Uuid::new_v4().to_string();
+        self.conn().execute(
+            "insert into subscriptions (id, source_url, title, kind, preset_id) values (?1, ?2, ?3, ?4, ?5)",
+            params![id, url, title, kind, preset_id],
+        ).map_err(|e| match e {
+            rusqlite::Error::SqliteFailure(f, _) if f.code == rusqlite::ErrorCode::ConstraintViolation =>
+                AppError::new("already_subscribed", "Ya estás suscrito a ese enlace."),
+            e => e.into(),
+        })?;
+        Ok(self.get_subscription(&id)?.expect("recién creada"))
+    }
+
+    pub fn get_subscription(&self, id: &str) -> AppResult<Option<Subscription>> {
+        Ok(self.list_subscriptions()?.into_iter().find(|s| s.id == id))
+    }
+
+    pub fn list_subscriptions(&self) -> AppResult<Vec<Subscription>> {
+        let rows: Vec<(String, String, String, String, bool, String, Option<String>, Option<String>, i64, String)> = {
+            let c = self.conn();
+            let mut stmt = c.prepare(
+                "select s.id, s.source_url, s.title, s.kind, s.enabled, s.preset_id, s.last_checked_at, s.last_error, \
+                 (select count(*) from downloads d where d.subscription_id = s.id), s.created_at \
+                 from subscriptions s order by s.created_at desc",
+            )?;
+            let it = stmt.query_map([], |r| {
+                Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get::<_, i64>(4)? == 1, r.get(5)?, r.get(6)?, r.get(7)?, r.get(8)?, r.get(9)?))
+            })?;
+            it.collect::<Result<_, _>>()?
+        };
+        rows.into_iter()
+            .map(|(id, source_url, title, kind, enabled, preset_id, last_checked_at, last_error, download_count, created_at)| {
+                let preset = self.get_preset(&preset_id)?.ok_or_else(|| AppError::new("db", "Falta el formato de la suscripción"))?;
+                Ok(Subscription { id, source_url, title, kind, enabled, preset, last_checked_at, last_error, download_count, created_at })
+            })
+            .collect()
+    }
+
+    pub fn set_subscription_enabled(&self, id: &str, enabled: bool) -> AppResult<()> {
+        self.conn().execute("update subscriptions set enabled = ?2 where id = ?1", params![id, enabled as i64])?;
+        Ok(())
+    }
+
+    /// Borra la suscripción y su formato. Sus descargas se quedan en la lista.
+    pub fn delete_subscription(&self, id: &str) -> AppResult<()> {
+        let mut c = self.conn();
+        let tx = c.transaction()?;
+        let preset: Option<String> = tx.query_row("select preset_id from subscriptions where id = ?1", [id], |r| r.get(0)).optional()?;
+        tx.execute("delete from subscriptions where id = ?1", [id])?;
+        if let Some(p) = preset {
+            tx.execute("delete from presets where id = ?1 and is_smart_mode = 0 and not exists (select 1 from subscriptions where preset_id = ?1)", [p])?;
+        }
+        tx.commit()?;
+        Ok(())
+    }
+
+    pub fn seen_ids(&self, sub: &str) -> AppResult<std::collections::HashSet<String>> {
+        let c = self.conn();
+        let mut stmt = c.prepare("select video_id from subscription_seen where subscription_id = ?1")?;
+        let ids = stmt.query_map([sub], |r| r.get(0))?.collect::<Result<_, _>>()?;
+        Ok(ids)
+    }
+
+    pub fn mark_seen(&self, sub: &str, ids: &[String]) -> AppResult<()> {
+        let mut c = self.conn();
+        let tx = c.transaction()?;
+        for v in ids {
+            tx.execute("insert or ignore into subscription_seen (subscription_id, video_id) values (?1, ?2)", params![sub, v])?;
+        }
+        tx.commit()?;
+        Ok(())
+    }
+
+    pub fn set_subscription_checked(&self, id: &str, error: Option<&str>) -> AppResult<()> {
+        self.conn().execute(
+            "update subscriptions set last_checked_at = ?2, last_error = ?3 where id = ?1",
+            params![id, now(), error],
+        )?;
+        Ok(())
+    }
+
+    /// Las activas a las que ya les toca: nunca comprobadas o hace más de `every_h` horas.
+    pub fn due_subscriptions(&self, every_h: i64) -> AppResult<Vec<Subscription>> {
+        let limit = (chrono::Utc::now() - chrono::Duration::hours(every_h)).format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+        Ok(self
+            .list_subscriptions()?
+            .into_iter()
+            .filter(|s| s.enabled && s.last_checked_at.as_deref().map_or(true, |t| t < limit.as_str()))
+            .collect())
+    }
+
     // ---------- descargas ----------
 
     pub fn insert_download(&self, n: &NewDownload, o: &DownloadOptions, output_dir: &str) -> AppResult<Download> {
@@ -200,13 +353,14 @@ impl Db {
             c.execute(
                 "insert into downloads (id, source_url, video_id, extractor, title, uploader, thumbnail_url, duration_s, \
                  kind, container, quality, audio_lang, subtitle_langs, subtitles_embedded, output_dir, size_bytes, \
-                 position, playlist_id, created_at, updated_at) \
-                 values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?19)",
+                 position, playlist_id, subscription_id, preset_id, created_at, updated_at) \
+                 values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?21)",
                 params![
                     id, n.source_url, n.video_id, n.extractor, n.title, n.uploader, n.thumbnail_url, n.duration_s,
                     o.kind.as_str(), o.container, o.quality, o.audio_lang,
                     serde_json::to_string(&o.subtitle_langs).unwrap_or_else(|_| "[]".into()),
-                    o.subtitles_embedded as i64, output_dir, n.size_bytes, position, n.playlist_id, now()
+                    o.subtitles_embedded as i64, output_dir, n.size_bytes, position, n.playlist_id,
+                    n.subscription_id, n.preset_id, now()
                 ],
             )?;
         }

@@ -3,6 +3,7 @@ pub mod db;
 pub mod engine;
 pub mod models;
 pub mod queue;
+pub mod subscriptions;
 pub mod updater;
 
 use std::sync::{Arc, RwLock};
@@ -17,6 +18,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
@@ -41,6 +43,16 @@ pub fn run() {
                 let state = h.state::<AppState>();
                 commands::startup_engine_check(&state).await;
             });
+            // Suscripciones: al arrancar y luego cada 10 minutos se miran las que ya tocan.
+            let h = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+                loop {
+                    let state = h.state::<AppState>();
+                    commands::check_due_subscriptions(&state).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(600)).await;
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -62,6 +74,14 @@ pub fn run() {
             commands::engine_check,
             commands::engine_update,
             commands::engine_rollback,
+            commands::get_smart_mode,
+            commands::save_smart_mode,
+            commands::smart_download,
+            commands::subscribe,
+            commands::list_subscriptions,
+            commands::set_subscription_enabled,
+            commands::unsubscribe,
+            commands::check_subscription_now,
         ])
         .run(tauri::generate_context!())
         .expect("no se pudo arrancar la app");

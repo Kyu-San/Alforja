@@ -111,6 +111,10 @@ pub async fn parse_url(state: State<'_, AppState>, url: String) -> AppResult<Par
 
 #[tauri::command]
 pub async fn start_download(state: State<'_, AppState>, url: String, options: DownloadOptions) -> AppResult<Download> {
+    start_one(&state, url, options).await
+}
+
+async fn start_one(state: &AppState, url: String, options: DownloadOptions) -> AppResult<Download> {
     check_options(&options)?;
     let url = engine::validate_url(&url)?;
     let dir = state.output_dir(&options)?;
@@ -133,6 +137,8 @@ pub async fn start_download(state: State<'_, AppState>, url: String, options: Do
             duration_s: m.duration_s,
             size_bytes: size,
             playlist_id: None,
+            subscription_id: None,
+            preset_id: None,
         };
     }
     let d = state.db.insert_download(&n, &options, &dir)?;
@@ -276,6 +282,94 @@ pub fn update_settings(state: State<'_, AppState>, patch: SettingsPatch) -> AppR
     let s = state.db.update_settings(&patch)?;
     state.queue.wake();
     Ok(s)
+}
+
+// ---------- Smart Mode (F04) ----------
+
+pub const SMART_MODE_ID: &str = "smart-mode";
+
+#[tauri::command]
+pub fn get_smart_mode(state: State<'_, AppState>) -> AppResult<Option<Preset>> {
+    state.db.get_preset(SMART_MODE_ID)
+}
+
+#[tauri::command]
+pub fn save_smart_mode(state: State<'_, AppState>, options: DownloadOptions, enabled: bool) -> AppResult<Preset> {
+    check_options(&options)?;
+    if let Some(d) = options.output_dir.as_deref().filter(|d| !d.trim().is_empty()) {
+        check_dir(d)?;
+    }
+    state.db.save_preset(Some(SMART_MODE_ID), "Smart Mode", &options, enabled)
+}
+
+/// Pegar con Smart Mode: un video se pone en la cola sin diálogo; una lista
+/// vuelve a la interfaz para elegir qué bajar.
+#[tauri::command]
+pub async fn smart_download(state: State<'_, AppState>, url: String) -> AppResult<SmartResult> {
+    let preset = state
+        .db
+        .get_preset(SMART_MODE_ID)?
+        .filter(|p| p.is_smart_mode)
+        .ok_or_else(|| AppError::new("smart_off", "Smart Mode está desactivado."))?;
+    match state.parse(&url).await? {
+        ParseResult::Video(_) => Ok(SmartResult::Started { download: start_one(&state, url, preset.options).await? }),
+        ParseResult::Playlist(info) => Ok(SmartResult::Playlist { info }),
+    }
+}
+
+// ---------- suscripciones (F05) ----------
+
+#[tauri::command]
+pub async fn subscribe(state: State<'_, AppState>, url: String, options: DownloadOptions) -> AppResult<Subscription> {
+    check_options(&options)?;
+    if let Some(d) = options.output_dir.as_deref().filter(|d| !d.trim().is_empty()) {
+        check_dir(d)?;
+    }
+    let engine = state.engine()?;
+    let sub = crate::subscriptions::subscribe(&state.db, &engine, &url, &options).await?;
+    Ok(sub)
+}
+
+#[tauri::command]
+pub fn list_subscriptions(state: State<'_, AppState>) -> AppResult<Vec<Subscription>> {
+    state.db.list_subscriptions()
+}
+
+#[tauri::command]
+pub fn set_subscription_enabled(state: State<'_, AppState>, id: String, enabled: bool) -> AppResult<Subscription> {
+    state.db.set_subscription_enabled(&id, enabled)?;
+    state.db.get_subscription(&id)?.ok_or_else(|| AppError::new("not_found", "Esa suscripción ya no existe"))
+}
+
+#[tauri::command]
+pub fn unsubscribe(state: State<'_, AppState>, id: String) -> AppResult<()> {
+    state.db.delete_subscription(&id)
+}
+
+#[tauri::command]
+pub async fn check_subscription_now(state: State<'_, AppState>, id: String) -> AppResult<i64> {
+    let sub = state.db.get_subscription(&id)?.ok_or_else(|| AppError::new("not_found", "Esa suscripción ya no existe"))?;
+    let engine = state.engine()?;
+    let n = crate::subscriptions::check(&state.db, &engine, &state.sink, &sub).await?;
+    if n > 0 {
+        state.queue.wake();
+    }
+    Ok(n)
+}
+
+/// Las que ya tocan, una detrás de otra y con pausa (los sitios limitan).
+pub async fn check_due_subscriptions(state: &AppState) {
+    let Ok(settings) = state.db.get_settings() else { return };
+    let Ok(due) = state.db.due_subscriptions(settings.subscription_every_h) else { return };
+    let Ok(engine) = state.engine() else { return };
+    for sub in due {
+        match crate::subscriptions::check(&state.db, &engine, &state.sink, &sub).await {
+            Ok(n) if n > 0 => state.queue.wake(),
+            Ok(_) => {}
+            Err(e) => eprintln!("suscripciones: no se pudo comprobar una: {}", e.code),
+        }
+        tokio::time::sleep(Duration::from_secs(2)).await;
+    }
 }
 
 // ---------- motor (F09) ----------

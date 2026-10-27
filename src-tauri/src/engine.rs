@@ -77,9 +77,37 @@ impl Engine {
 
     /// `yt-dlp -J --flat-playlist -- <url>`
     pub async fn parse(&self, url: &str, settings: &Settings) -> AppResult<ParseResult> {
+        self.parse_limited(url, settings, None).await
+    }
+
+    /// Como `parse`, pero solo las primeras `limit` entradas de una lista
+    /// (las suscripciones solo necesitan lo último). La raíz de un canal
+    /// devuelve sus pestañas: se sigue la de videos.
+    pub async fn parse_limited(&self, url: &str, settings: &Settings, limit: Option<u32>) -> AppResult<ParseResult> {
+        let first = self.parse_once(url, settings, limit).await?;
+        let ParseResult::Playlist(info) = &first else { return Ok(first) };
+        let Some(tab) = channel_tab(info) else { return Ok(first) };
+        match self.parse_once(&tab, settings, limit).await? {
+            ParseResult::Playlist(videos) => Ok(ParseResult::Playlist(PlaylistInfo {
+                url: info.url.clone(),
+                id: info.id.clone(),
+                title: info.title.clone(),
+                uploader: info.uploader.clone().or(videos.uploader),
+                kind: "channel".into(),
+                entries: videos.entries,
+            })),
+            other => Ok(other),
+        }
+    }
+
+    async fn parse_once(&self, url: &str, settings: &Settings, limit: Option<u32>) -> AppResult<ParseResult> {
         let url = validate_url(url)?;
         let mut args = self.common_args(settings);
-        args.extend(["-J".into(), "--flat-playlist".into(), "--no-warnings".into(), "--".into(), url.clone()]);
+        args.extend(["-J".into(), "--flat-playlist".into(), "--no-warnings".into()]);
+        if let Some(n) = limit {
+            args.extend(["--playlist-end".into(), n.to_string()]);
+        }
+        args.extend(["--".into(), url.clone()]);
         let out = self
             .command()
             .args(&args)
@@ -167,6 +195,25 @@ impl Engine {
         a.extend(["--".into(), url]);
         Ok(a)
     }
+}
+
+const CHANNEL_TABS: &[&str] = &["/videos", "/shorts", "/streams", "/live", "/podcasts", "/releases", "/playlists", "/featured", "/community"];
+
+/// Si la "lista" son las pestañas de un canal, la URL de la pestaña de videos
+/// (o la primera que haya). Si no, None.
+pub fn channel_tab(info: &PlaylistInfo) -> Option<String> {
+    if info.entries.is_empty() {
+        return None;
+    }
+    let is_tab = |u: &str| CHANNEL_TABS.iter().any(|t| u.trim_end_matches('/').ends_with(t));
+    if !info.entries.iter().all(|e| is_tab(&e.url)) {
+        return None;
+    }
+    info.entries
+        .iter()
+        .find(|e| e.url.trim_end_matches('/').ends_with("/videos"))
+        .or_else(|| info.entries.first())
+        .map(|e| e.url.clone())
 }
 
 /// Solo http y https. Una "URL" que empieza por "-" ni siquiera llega aquí
@@ -492,6 +539,19 @@ pub fn kill_tree_hard(pid: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn channel_root_follows_the_videos_tab() {
+        let entry = |u: &str| PlaylistEntry { id: u.into(), url: u.into(), title: None, duration_s: None, thumbnail: None };
+        let mut info = PlaylistInfo { url: "https://www.youtube.com/@ejemplo".into(), id: "UC1".into(), title: "Ejemplo".into(), uploader: None, kind: "channel".into(), entries: vec![] };
+        info.entries = vec![entry("https://www.youtube.com/@ejemplo/shorts"), entry("https://www.youtube.com/@ejemplo/videos"), entry("https://www.youtube.com/@ejemplo/streams")];
+        assert_eq!(channel_tab(&info).as_deref(), Some("https://www.youtube.com/@ejemplo/videos"));
+        info.entries = vec![entry("https://www.youtube.com/@ejemplo/shorts")];
+        assert_eq!(channel_tab(&info).as_deref(), Some("https://www.youtube.com/@ejemplo/shorts"));
+        // Una lista normal de videos no se toca.
+        info.entries = vec![entry("https://www.youtube.com/watch?v=a"), entry("https://www.youtube.com/@ejemplo/videos")];
+        assert_eq!(channel_tab(&info), None);
+    }
 
     #[test]
     fn urls_are_validated() {

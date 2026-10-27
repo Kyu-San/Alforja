@@ -189,6 +189,42 @@ pub enum ParseResult {
     Playlist(PlaylistInfo),
 }
 
+/// Un perfil de formato: el de Smart Mode o el de una suscripción.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Preset {
+    pub id: String,
+    pub name: String,
+    pub options: DownloadOptions,
+    pub is_smart_mode: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Subscription {
+    pub id: String,
+    pub source_url: String,
+    pub title: String,
+    /// "playlist" o "channel"
+    pub kind: String,
+    pub enabled: bool,
+    pub preset: Preset,
+    pub last_checked_at: Option<String>,
+    pub last_error: Option<String>,
+    /// Cuántas descargas ha creado.
+    pub download_count: i64,
+    pub created_at: String,
+}
+
+/// Lo que devuelve "pegar" con Smart Mode: la descarga ya creada o, si el
+/// enlace es una lista, el análisis para elegir en S04.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum SmartResult {
+    Started { download: Download },
+    Playlist { info: PlaylistInfo },
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
@@ -252,6 +288,8 @@ pub enum AppEvent {
     Download { download: Download },
     Removed { id: String },
     Engine { status: EngineStatus },
+    #[serde(rename_all = "camelCase")]
+    SubscriptionChecked { id: String, new_downloads: i64 },
 }
 
 /// Error que ve la interfaz: un código estable y un mensaje en español.
