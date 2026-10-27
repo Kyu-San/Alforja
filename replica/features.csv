@@ -3,17 +3,17 @@ Pegar un enlace desde el portapapeles con un botón,descarga,must,yes,yes,"el ge
 Analizar el enlace y listar formatos y calidades disponibles,descarga,must,yes,yes,yt-dlp --dump-json | yt-dlp -J; probado en la app real con HLS local (720p/360p + audio aparte)
 Elegir calidad de video (360p a 4K/8K según la fuente),descarga,must,yes,yes,">1080p en YouTube viene en pistas separadas: hace falta ffmpeg | selector con caída; si no hay la pedida, lo dice en amarillo. Probado (pide 1080p, obtiene 720p)"
 Elegir contenedor MP4 o MKV,descarga,must,yes,yes,probado de punta a punta
-Extraer solo audio a MP3 / M4A / OGG,descarga,must,yes,yes,yt-dlp -x con ffmpeg | MP3 probado de punta a punta; M4A y OGG usan el mismo camino sin prueba propia
+Extraer solo audio a MP3 / M4A / OGG,descarga,must,yes,yes,"yt-dlp -x con ffmpeg | MP3, M4A y OGG probados con el motor real"
 Elegir carpeta de destino,descarga,must,yes,yes,diálogo nativo; las listas van a una subcarpeta con su nombre
 Lista de descargas con progreso / velocidad / tiempo restante,cola,must,yes,yes,parsear la salida de progreso de yt-dlp | eventos de progreso cada 250 ms; barra de estado con el total
 Pausar / reanudar / cancelar / reintentar una descarga,cola,must,yes,yes,"prueba de integración con descarga lenta: pausa a mitad, continúa el .part; cancelar borra temporales"
-Abrir el archivo o mostrarlo en la carpeta,cola,must,yes,partial,hecho con el plugin opener de Tauri; sin probar en un escritorio con gestor de archivos
+Abrir el archivo o mostrarlo en la carpeta,cola,must,yes,yes,"probado en la app real (Linux): abrir con doble clic y mostrar en la carpeta, con alternativa si no hay gestor de archivos D-Bus (BUG-006). Sin probar en Windows/macOS"
 Mensajes de error claros (enlace no soportado / privado / bloqueado por región),cola,must,yes,yes,12 códigos traducidos; detalle técnico plegado
 Descargar una playlist completa,playlists,must,yes,yes,probado en la app real con un RSS local de 2 videos
 Elegir qué videos de la playlist descargar,playlists,should,yes,yes,"casillas, filtro, seleccionar todo; lista virtualizada para miles"
 Descargar un canal completo,playlists,should,yes,partial,la URL /videos de un canal funciona como lista; la raíz del canal (@nombre) devuelve pestañas y aún no se trata
-Subtítulos en SRT con elección de idioma,subtítulos,should,yes,partial,interfaz y argumentos hechos; sin prueba de punta a punta (no hay video local con subtítulos)
-Incrustar subtítulos en el video,subtítulos,could,yes,partial,--embed-subs; misma falta de prueba que los SRT
+Subtítulos en SRT con elección de idioma,subtítulos,should,yes,yes,"probado con el motor real: .es.srt con acentos, solo el idioma pedido (f06_h2)"
+Incrustar subtítulos en el video,subtítulos,could,yes,yes,probado con el motor real: el .mkv lleva pista de subtítulos (ffprobe)
 Pista de audio original o de otro idioma,descarga,should,yes,partial,añadido en 25.1 / gratis desde 25.2 | selector ba[language^=xx] con caída; sin video local con varias pistas para probarlo
 Smart Mode: guardar preferencias y descargar con un clic,smart mode,should,yes,no,pantalla que explica que llega en la próxima versión
 Suscribirse a un canal o playlist y bajar lo nuevo automáticamente,suscripciones,should,yes,no,pantalla que explica que llega en la próxima versión
@@ -30,4 +30,3 @@ Recomendaciones de videos similares en la app,descubrimiento,could,yes,skip,no a
 Sistema de licencias / planes / activación por dispositivo,licencias,could,yes,skip,es uso personal: no hay nada que vender
 Límites del plan gratuito y anuncios,licencias,could,yes,skip,es su modelo de negocio; no es una función
 Saltarse protecciones de login de YouTube,fuentes,could,yes,skip,elusión de medidas técnicas: no se construye
-Contenido con DRM (Netflix / Spotify / etc.),fuentes,could,no,skip,el original tampoco lo hace; ilegal en muchos países
