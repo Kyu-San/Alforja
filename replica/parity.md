@@ -1,6 +1,6 @@
 # Paridad: Descargador frente a 4K Video Downloader+
 
-Fecha: 2026-10-27 (segunda pasada)  Build: 0230030  Plataforma probada: Linux
+Fecha: 2026-10-28 (tras la segunda ronda de pruebas)  Build: 03b4047  Plataforma probada: Linux
 
 ## Resumen
 
@@ -9,8 +9,8 @@ Fecha: 2026-10-27 (segunda pasada)  Build: 0230030  Plataforma probada: Linux
 | **Paridad de funciones** | **87,3 / 100** (25 funciones puntuadas; antes 80,0) |
 | Imprescindibles | **11 de 11** |
 | Paridad de diseño | **sin medir**: no hay capturas del original en `replica/screens/` |
-| Bugs abiertos | 0 S1, 0 S2, 0 S3, 1 S4 (BUG-007) |
-| Pruebas | 36 en Rust (motor real) + 41 de interfaz con axe, estables en 3 pasadas seguidas |
+| Bugs abiertos | 0 S1, 0 S2, 0 S3, 1 S4 (BUG-007); 11 de 12 arreglados |
+| Pruebas | 38 en Rust (motor real) + 49 de interfaz con axe, estables en pasadas repetidas; 76 casos del plan pasan |
 | Puntuación global | 87,3 (solo funciones; el diseño no entra porque no se ha medido) |
 
 **Veredicto: utilizable para uso personal en Linux.** Cumple las reglas de
@@ -90,7 +90,7 @@ a mano). "Sin comprobar" = las fuentes no lo dicen.
 | F01 opciones del diálogo | sin comprobar si recuerda la última elección | recuerda la última elección (si el video no tiene esa calidad, la mejor que haya) | hecho |
 | F01 calidad no disponible | reseñas: se queda en 1080p sin decirlo | baja la mejor por debajo y lo dice en la fila ("1080p (no había 2160p)") | dejar: mejor que el original |
 | F01 errores | reseñas: errores "403", descargas atascadas | 12 errores con mensaje propio, detalle técnico plegado, Reintentar; aviso tras 3 fallos seguidos del motor | dejar |
-| F01 al terminar | sin comprobar | notificación del sistema si la ventana no está delante (se puede apagar) | hecho |
+| F01 al terminar | sin comprobar | notificación del sistema si la ventana no está delante (se puede apagar); comprobada en la app real en Linux | hecho |
 | F03 listas | paywall: 10 videos por lista en el plan gratis | sin límite; lista virtualizada (2.000 sin problema), subcarpeta con el nombre | dejar |
 | F03 canales | canal completo | la raíz `@nombre` sigue la pestaña de videos | hecho, **sin probar con YouTube** |
 | F05 suscripciones | sí | sí: no baja lo que ya había, frecuencia de 1 h a 3 días, pausar, comprobar ahora | hecho |
