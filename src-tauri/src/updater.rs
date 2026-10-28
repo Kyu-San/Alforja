@@ -5,7 +5,7 @@
 //!   y se prueba (`--version`) antes de sustituir al actual.
 //! - El anterior se guarda como `yt-dlp.prev` para poder volver atrás.
 //!
-//! `DESCARGADOR_RELEASES_URL` cambia el origen (para las pruebas, con un
+//! `ALFORJA_RELEASES_URL` cambia el origen (para las pruebas, con un
 //! servidor local que imita la respuesta de GitHub).
 
 use std::path::{Path, PathBuf};
@@ -92,9 +92,9 @@ fn net_err(e: reqwest::Error) -> AppError {
 
 impl Updater {
     pub fn new(bin_dir: PathBuf) -> Updater {
-        let api_url = std::env::var("DESCARGADOR_RELEASES_URL").unwrap_or_else(|_| GITHUB_LATEST.to_string());
+        let api_url = std::env::var("ALFORJA_RELEASES_URL").unwrap_or_else(|_| GITHUB_LATEST.to_string());
         let client = reqwest::Client::builder()
-            .user_agent(concat!("descargador/", env!("CARGO_PKG_VERSION")))
+            .user_agent(concat!("alforja/", env!("CARGO_PKG_VERSION")))
             .connect_timeout(Duration::from_secs(15))
             .timeout(Duration::from_secs(300))
             .build()

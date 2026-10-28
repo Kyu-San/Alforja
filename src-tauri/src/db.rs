@@ -93,7 +93,7 @@ fn row_to_preset(r: &Row) -> rusqlite::Result<Preset> {
             subtitles_embedded: r.get::<_, i64>(7)? == 1,
             output_dir: r.get(8)?,
         },
-        is_smart_mode: r.get::<_, i64>(9)? == 1,
+        is_direct_mode: r.get::<_, i64>(9)? == 1,
     })
 }
 
@@ -211,13 +211,13 @@ impl Db {
         )?)
     }
 
-    // ---------- presets (Smart Mode y suscripciones) ----------
+    // ---------- presets (Modo directo y suscripciones) ----------
 
     pub fn get_preset(&self, id: &str) -> AppResult<Option<Preset>> {
         Ok(self
             .conn()
             .query_row(
-                "select id, name, kind, container, quality, audio_lang, subtitle_langs, subtitles_embedded, output_dir, is_smart_mode from presets where id = ?1",
+                "select id, name, kind, container, quality, audio_lang, subtitle_langs, subtitles_embedded, output_dir, is_direct_mode from presets where id = ?1",
                 [id],
                 row_to_preset,
             )
@@ -225,18 +225,18 @@ impl Db {
     }
 
     /// Crea o sustituye un preset con id fijo (o nuevo si `id` es None).
-    pub fn save_preset(&self, id: Option<&str>, name: &str, o: &DownloadOptions, is_smart_mode: bool) -> AppResult<Preset> {
+    pub fn save_preset(&self, id: Option<&str>, name: &str, o: &DownloadOptions, is_direct_mode: bool) -> AppResult<Preset> {
         let id = id.map(str::to_string).unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
         self.conn().execute(
-            "insert into presets (id, name, kind, container, quality, audio_lang, subtitle_langs, subtitles_embedded, output_dir, is_smart_mode) \
+            "insert into presets (id, name, kind, container, quality, audio_lang, subtitle_langs, subtitles_embedded, output_dir, is_direct_mode) \
              values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) \
              on conflict(id) do update set name = excluded.name, kind = excluded.kind, container = excluded.container, \
              quality = excluded.quality, audio_lang = excluded.audio_lang, subtitle_langs = excluded.subtitle_langs, \
-             subtitles_embedded = excluded.subtitles_embedded, output_dir = excluded.output_dir, is_smart_mode = excluded.is_smart_mode",
+             subtitles_embedded = excluded.subtitles_embedded, output_dir = excluded.output_dir, is_direct_mode = excluded.is_direct_mode",
             params![
                 id, name, o.kind.as_str(), o.container, o.quality, o.audio_lang,
                 serde_json::to_string(&o.subtitle_langs).unwrap_or_else(|_| "[]".into()),
-                o.subtitles_embedded as i64, o.output_dir, is_smart_mode as i64
+                o.subtitles_embedded as i64, o.output_dir, is_direct_mode as i64
             ],
         )?;
         Ok(self.get_preset(&id)?.expect("recién guardado"))
@@ -244,7 +244,7 @@ impl Db {
 
     pub fn delete_preset_if_unused(&self, id: &str) -> AppResult<()> {
         self.conn().execute(
-            "delete from presets where id = ?1 and is_smart_mode = 0 and not exists (select 1 from subscriptions where preset_id = ?1)",
+            "delete from presets where id = ?1 and is_direct_mode = 0 and not exists (select 1 from subscriptions where preset_id = ?1)",
             [id],
         )?;
         Ok(())
@@ -302,7 +302,7 @@ impl Db {
         let preset: Option<String> = tx.query_row("select preset_id from subscriptions where id = ?1", [id], |r| r.get(0)).optional()?;
         tx.execute("delete from subscriptions where id = ?1", [id])?;
         if let Some(p) = preset {
-            tx.execute("delete from presets where id = ?1 and is_smart_mode = 0 and not exists (select 1 from subscriptions where preset_id = ?1)", [p])?;
+            tx.execute("delete from presets where id = ?1 and is_direct_mode = 0 and not exists (select 1 from subscriptions where preset_id = ?1)", [p])?;
         }
         tx.commit()?;
         Ok(())
@@ -571,7 +571,7 @@ mod tests {
     }
 
     #[test]
-    fn smart_mode_preset_roundtrip_and_survives_reopen() {
+    fn direct_mode_preset_roundtrip_and_survives_reopen() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("t.sqlite3");
         let o = DownloadOptions {
@@ -585,19 +585,19 @@ mod tests {
         };
         {
             let db = Db::open(&path).unwrap();
-            assert!(db.get_preset("smart-mode").unwrap().is_none());
-            let p = db.save_preset(Some("smart-mode"), "Smart Mode", &o, true).unwrap();
-            assert_eq!((p.options.clone(), p.is_smart_mode), (o.clone(), true));
+            assert!(db.get_preset("direct-mode").unwrap().is_none());
+            let p = db.save_preset(Some("direct-mode"), "Modo directo", &o, true).unwrap();
+            assert_eq!((p.options.clone(), p.is_direct_mode), (o.clone(), true));
             // Apagarlo conserva las opciones.
-            db.save_preset(Some("smart-mode"), "Smart Mode", &o, false).unwrap();
+            db.save_preset(Some("direct-mode"), "Modo directo", &o, false).unwrap();
         }
         let db = Db::open(&path).unwrap();
-        let p = db.get_preset("smart-mode").unwrap().unwrap();
-        assert_eq!((p.options.clone(), p.is_smart_mode), (o.clone(), false));
-        // Un segundo preset de Smart Mode activado no cabe.
+        let p = db.get_preset("direct-mode").unwrap().unwrap();
+        assert_eq!((p.options.clone(), p.is_direct_mode), (o.clone(), false));
+        // Un segundo preset de modo directo activado no cabe.
         let mut other = p.clone();
-        other.is_smart_mode = true;
-        db.save_preset(Some("smart-mode"), "Smart Mode", &other.options, true).unwrap();
+        other.is_direct_mode = true;
+        db.save_preset(Some("direct-mode"), "Modo directo", &other.options, true).unwrap();
         assert!(db.save_preset(Some("otro"), "Otro", &other.options, true).is_err());
     }
 

@@ -284,36 +284,36 @@ pub fn update_settings(state: State<'_, AppState>, patch: SettingsPatch) -> AppR
     Ok(s)
 }
 
-// ---------- Smart Mode (F04) ----------
+// ---------- Modo directo (F04) ----------
 
-pub const SMART_MODE_ID: &str = "smart-mode";
+pub const DIRECT_MODE_ID: &str = "direct-mode";
 
 #[tauri::command]
-pub fn get_smart_mode(state: State<'_, AppState>) -> AppResult<Option<Preset>> {
-    state.db.get_preset(SMART_MODE_ID)
+pub fn get_direct_mode(state: State<'_, AppState>) -> AppResult<Option<Preset>> {
+    state.db.get_preset(DIRECT_MODE_ID)
 }
 
 #[tauri::command]
-pub fn save_smart_mode(state: State<'_, AppState>, options: DownloadOptions, enabled: bool) -> AppResult<Preset> {
+pub fn save_direct_mode(state: State<'_, AppState>, options: DownloadOptions, enabled: bool) -> AppResult<Preset> {
     check_options(&options)?;
     if let Some(d) = options.output_dir.as_deref().filter(|d| !d.trim().is_empty()) {
         check_dir(d)?;
     }
-    state.db.save_preset(Some(SMART_MODE_ID), "Smart Mode", &options, enabled)
+    state.db.save_preset(Some(DIRECT_MODE_ID), "Modo directo", &options, enabled)
 }
 
-/// Pegar con Smart Mode: un video se pone en la cola sin diálogo; una lista
+/// Pegar con el modo directo: un video se pone en la cola sin diálogo; una lista
 /// vuelve a la interfaz para elegir qué bajar.
 #[tauri::command]
-pub async fn smart_download(state: State<'_, AppState>, url: String) -> AppResult<SmartResult> {
+pub async fn direct_download(state: State<'_, AppState>, url: String) -> AppResult<DirectResult> {
     let preset = state
         .db
-        .get_preset(SMART_MODE_ID)?
-        .filter(|p| p.is_smart_mode)
-        .ok_or_else(|| AppError::new("smart_off", "Smart Mode está desactivado."))?;
+        .get_preset(DIRECT_MODE_ID)?
+        .filter(|p| p.is_direct_mode)
+        .ok_or_else(|| AppError::new("direct_off", "El modo directo está apagado."))?;
     match state.parse(&url).await? {
-        ParseResult::Video(_) => Ok(SmartResult::Started { download: start_one(&state, url, preset.options).await? }),
-        ParseResult::Playlist(info) => Ok(SmartResult::Playlist { info }),
+        ParseResult::Video(_) => Ok(DirectResult::Started { download: start_one(&state, url, preset.options).await? }),
+        ParseResult::Playlist(info) => Ok(DirectResult::Playlist { info }),
     }
 }
 

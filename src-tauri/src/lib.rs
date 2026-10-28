@@ -22,7 +22,7 @@ pub fn run() {
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
-            let db = Arc::new(db::Db::open(&data_dir.join("descargador.sqlite3"))?);
+            let db = Arc::new(db::Db::open(&data_dir.join("alforja.sqlite3"))?);
             db.ensure_settings(&queue::default_output_dir().to_string_lossy())?;
             let recovered = db.recover_on_start()?;
             if recovered > 0 {
@@ -74,9 +74,9 @@ pub fn run() {
             commands::engine_check,
             commands::engine_update,
             commands::engine_rollback,
-            commands::get_smart_mode,
-            commands::save_smart_mode,
-            commands::smart_download,
+            commands::get_direct_mode,
+            commands::save_direct_mode,
+            commands::direct_download,
             commands::subscribe,
             commands::list_subscriptions,
             commands::set_subscription_enabled,

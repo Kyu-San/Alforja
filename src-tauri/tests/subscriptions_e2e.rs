@@ -1,18 +1,18 @@
 //! Suscripciones con yt-dlp real: un RSS servido aquí mismo, que va
 //! "publicando" videos nuevos, con enlaces a los clips de scripts/test_server.py.
 //!
-//!     DESCARGADOR_TEST_SERVER=http://127.0.0.1:8766 cargo test --test subscriptions_e2e
+//!     ALFORJA_TEST_SERVER=http://127.0.0.1:8766 cargo test --test subscriptions_e2e
 
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant};
 
-use descargador_lib::db::Db;
-use descargador_lib::engine::Engine;
-use descargador_lib::models::*;
-use descargador_lib::queue::{Ctx, Queue, Sink};
-use descargador_lib::subscriptions;
+use alforja_lib::db::Db;
+use alforja_lib::engine::Engine;
+use alforja_lib::models::*;
+use alforja_lib::queue::{Ctx, Queue, Sink};
+use alforja_lib::subscriptions;
 
 /// Un RSS que cambia: cada item es (guid, archivo del servidor de clips).
 static FEED_DOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -63,7 +63,7 @@ struct H {
 }
 
 fn setup() -> Option<H> {
-    let clips = std::env::var("DESCARGADOR_TEST_SERVER").ok()?;
+    let clips = std::env::var("ALFORJA_TEST_SERVER").ok()?;
     std::env::set_var("NO_PROXY", "127.0.0.1,localhost");
     std::env::set_var("no_proxy", "127.0.0.1,localhost");
     let dir = tempfile::tempdir().unwrap();
@@ -128,7 +128,7 @@ async fn subscribe_skips_existing_and_queues_only_new_videos() {
 #[tokio::test(flavor = "multi_thread")]
 async fn rules_and_unsubscribe() {
     let Some(h) = setup() else { return };
-    let clip = format!("{}/clip1.mp4", std::env::var("DESCARGADOR_TEST_SERVER").unwrap());
+    let clip = format!("{}/clip1.mp4", std::env::var("ALFORJA_TEST_SERVER").unwrap());
     assert_eq!(subscriptions::subscribe(&h.db, &h.engine, &clip, &opts()).await.unwrap_err().code, "not_playlist");
 
     let sub = subscriptions::subscribe(&h.db, &h.engine, &h.feed, &opts()).await.unwrap();

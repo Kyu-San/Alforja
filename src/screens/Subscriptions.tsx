@@ -154,7 +154,7 @@ export function SubscriptionsScreen() {
             </Button>
           }
         >
-          Copia el enlace de un canal o una lista, pégalo y elige Suscribirse: cada video nuevo se descargará solo, con el formato que elijas.
+          Pega el enlace de un canal o una lista y elige Suscribirse. Cada video nuevo se bajará solo, como tú digas.
         </EmptyState>
       ) : (
         <ul className="m-0 list-none p-0" aria-label="Suscripciones">

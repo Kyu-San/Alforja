@@ -61,7 +61,7 @@ function InputDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={parsing ? "Analizando el enlace…" : stage === "error" ? "No se pudo analizar" : "Pegar un enlace"}
+      title={parsing ? "Leyendo el enlace…" : stage === "error" ? "Ese enlace no se pudo leer" : "Pegar un enlace"}
       busy={parsing}
       footer={
         <>
@@ -88,7 +88,7 @@ function InputDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
           onChange={(e) => setValue(e.target.value)}
           onBlur={() => setTouched(true)}
           error={invalid ? "Eso no parece un enlace: tiene que empezar por http:// o https://" : null}
-          hint={!parsing && stage !== "error" ? "El portapapeles no tenía un enlace. Pégalo aquí (Ctrl+V)." : undefined}
+          hint={!parsing && stage !== "error" ? "No había ningún enlace copiado. Pégalo aquí (Ctrl+V)." : undefined}
           autoFocus
           disabled={parsing}
         />
@@ -140,9 +140,9 @@ function MediaHeader({ title, subtitle, thumbnail, icon }: { title: string; subt
 
 function useChoice() {
   const outputDir = useStore((s) => s.settings?.outputDir ?? "");
-  const smart = useStore((s) => s.smart);
-  // Con Smart Mode, sus opciones; si no, las de la última descarga.
-  return useState<Choice>(() => (smart?.isSmartMode ? choiceFromOptions(smart.options, outputDir) : loadLastChoice(outputDir)));
+  const direct = useStore((s) => s.direct);
+  // Con el modo directo, sus opciones; si no, las de la última descarga.
+  return useState<Choice>(() => (direct?.isDirectMode ? choiceFromOptions(direct.options, outputDir) : loadLastChoice(outputDir)));
 }
 
 /** S03: un video. */

@@ -37,11 +37,11 @@ impl Engine {
     pub fn locate(app_bin_dir: Option<&Path>) -> Option<Engine> {
         let from_env = |var: &str| std::env::var_os(var).map(PathBuf::from).filter(|p| p.is_file());
         let in_bin = |name: &str| app_bin_dir.map(|d| d.join(exe(name))).filter(|p| p.is_file());
-        let (ytdlp, source) = from_env("DESCARGADOR_YTDLP")
+        let (ytdlp, source) = from_env("ALFORJA_YTDLP")
             .map(|p| (p, "env"))
             .or_else(|| in_bin("yt-dlp").map(|p| (p, "app")))
             .or_else(|| which("yt-dlp").map(|p| (p, "system")))?;
-        let ffmpeg = from_env("DESCARGADOR_FFMPEG").or_else(|| in_bin("ffmpeg")).or_else(|| which("ffmpeg"));
+        let ffmpeg = from_env("ALFORJA_FFMPEG").or_else(|| in_bin("ffmpeg")).or_else(|| which("ffmpeg"));
         Some(Engine { ytdlp, ffmpeg, source })
     }
 

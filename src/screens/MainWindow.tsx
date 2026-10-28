@@ -16,7 +16,7 @@ import { navigate } from "../lib/router";
 import { useStore, visibleDownloads } from "../store";
 import { DownloadItem, useDownloadActions } from "./DownloadItem";
 import { pasteFromClipboard } from "./pasteFlow";
-import { SmartModeDialog } from "./SmartMode";
+import { DirectModeDialog } from "./DirectMode";
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 export const mod = isMac ? "⌘" : "Ctrl";
@@ -26,8 +26,8 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
   const setSearch = useStore((s) => s.setSearch);
   const remove = useStore((s) => s.remove);
   const toast = useToast();
-  const [smart, setSmart] = useState(false);
-  const smartOn = useStore((s) => !!s.smart?.isSmartMode);
+  const [direct, setDirect] = useState(false);
+  const directOn = useStore((s) => !!s.direct?.isDirectMode);
   const engineUpdate = useStore((s) => !!s.engine?.updateAvailable);
   return (
     <header>
@@ -37,9 +37,9 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
           Pegar enlace
         </Button>
       </Tooltip>
-      <Tooltip label={smartOn ? "Cada video que pegues se descarga directamente. Clic para cambiarlo." : "Descargar con un clic, sin diálogo"}>
-        <Button variant="ghost" icon={<Zap className={smartOn ? "size-4 fill-current" : "size-4"} />} onClick={() => setSmart(true)} className={smartOn ? "font-medium text-accent!" : "font-medium"} aria-pressed={smartOn}>
-          Smart Mode{smartOn ? <span className="sr-only"> (activado)</span> : null}
+      <Tooltip label={directOn ? "Encendido: cada video que pegues se baja solo. Pulsa para cambiarlo." : "Baja cada video al pegarlo, sin preguntarte"}>
+        <Button variant="ghost" icon={<Zap className={directOn ? "size-4 fill-current" : "size-4"} />} onClick={() => setDirect(true)} className={directOn ? "font-medium text-accent!" : "font-medium"} aria-pressed={directOn}>
+          Modo directo{directOn ? <span className="sr-only"> (activado)</span> : null}
         </Button>
       </Tooltip>
       <div className="flex-1" />
@@ -81,7 +81,7 @@ function Toolbar({ searchRef }: { searchRef: React.RefObject<HTMLInputElement> }
           </DM.Content>
         </DM.Portal>
       </DM.Root>
-      <SmartModeDialog open={smart} onOpenChange={setSmart} />
+      <DirectModeDialog open={direct} onOpenChange={setDirect} />
     </div>
     </header>
   );
@@ -152,14 +152,14 @@ function DownloadList() {
     return (
       <EmptyState
         icon={<Inbox />}
-        title="Aún no hay descargas"
+        title="Tu alforja está vacía"
         action={
           <Button variant="primary" icon={<ClipboardPaste className="size-4" />} onClick={() => pasteFromClipboard()}>
             Pegar enlace
           </Button>
         }
       >
-        Copia el enlace de un video, una lista o un canal y pulsa Pegar enlace (o {mod}+V).
+        Copia el enlace de un video, una lista o un canal y pulsa Pegar enlace ({mod}+V). Lo que bajes aparece aquí.
       </EmptyState>
     );
   if (!list.length)

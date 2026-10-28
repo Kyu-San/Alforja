@@ -1,10 +1,10 @@
 [package]
-name = "descargador"
+name = "alforja"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "descargador_lib"
+name = "alforja_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

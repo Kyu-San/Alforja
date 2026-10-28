@@ -59,7 +59,7 @@ test.describe("F01 bajar un video", () => {
   test("F01-E7 Esc mientras analiza: el resultado tardío no abre nada", async ({ page }) => {
     await page.goto("/?slow=1");
     await paste(page, "https://ejemplo.com/v/1");
-    await expect(page.getByRole("dialog", { name: "Analizando el enlace…" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Leyendo el enlace…" })).toBeVisible();
     await axe(page, "S02 analizando");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toBeHidden();
@@ -108,7 +108,7 @@ test.describe("F01 bajar un video", () => {
   test("F01-N3 video privado: error claro con detalle", async ({ page }) => {
     await page.goto("/");
     await paste(page, "https://ejemplo.com/video-privado");
-    await expect(page.getByRole("dialog", { name: "No se pudo analizar" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Ese enlace no se pudo leer" })).toBeVisible();
     await expect(page.getByRole("alert")).toContainText("Es privado");
     await axe(page, "S02 error");
   });

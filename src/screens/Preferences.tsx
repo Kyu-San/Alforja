@@ -249,7 +249,7 @@ function Engine() {
             </Button>
           ) : null}
         </div>
-        {pinned ? <p className="mt-2 text-xs text-muted">La variable DESCARGADOR_YTDLP fija el motor: la app no lo cambia.</p> : null}
+        {pinned ? <p className="mt-2 text-xs text-muted">La variable ALFORJA_YTDLP fija el motor: la app no lo cambia.</p> : null}
         {err ? (
           <p role="alert" className="mt-2 text-xs text-danger">
             {err}

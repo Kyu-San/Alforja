@@ -1,0 +1,7 @@
+{
+  "_about": "Lo que no puede quedar en Alforja. Lo usan sweep.py, listing.py y replica-deploy. colors está vacío porque no se conocen los colores de marca del original (no hay capturas): añádelos cuando las tengas.",
+  "name": "Alforja",
+  "avoid": ["4K Video Downloader", "4K Download", "4kdownload", "4K Stogram", "4K YouTube to MP3", "Smart Mode", "Descargador"],
+  "domains": ["4kdownload.com"],
+  "colors": []
+}

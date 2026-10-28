@@ -7,7 +7,7 @@
 // ?slow=1      análisis lento (para ver el estado "Analizando")
 // ?big=1       listas de 2.000 videos
 // ?engine=old  hay una versión nueva del motor
-// ?smart=1     Smart Mode activado
+// ?direct=1     modo directo encendido
 // ?subs=1      con suscripciones de ejemplo
 
 import type { Api, AppEvent, Download, DownloadOptions, EngineStatus, MediaInfo, ParseResult, PlaylistInfo, Preset, Settings, Status, Subscription } from "./types";
@@ -35,17 +35,17 @@ let settings: Settings = {
 };
 
 const downloads = new Map<string, Download>();
-let smart: Preset | null = params.get("smart")
-  ? { id: "smart-mode", name: "Smart Mode", isSmartMode: true, options: { kind: "video", container: "mp4", quality: "1080p", subtitleLangs: [], subtitlesEmbedded: false, outputDir: null } }
+let direct: Preset | null = params.get("direct")
+  ? { id: "direct-mode", name: "Modo directo", isDirectMode: true, options: { kind: "video", container: "mp4", quality: "1080p", subtitleLangs: [], subtitlesEmbedded: false, outputDir: null } }
   : null;
 let subscriptions: Subscription[] = params.get("subs")
   ? [
       { id: "s1", sourceUrl: "https://ejemplo.com/@canal-de-cocina", title: "Canal de cocina", kind: "channel", enabled: true, lastCheckedAt: new Date(Date.now() - 3_600_000).toISOString(), lastError: null, downloadCount: 12, createdAt: now(),
-        preset: { id: "p1", name: "Suscripción", isSmartMode: false, options: { kind: "video", container: "mp4", quality: "1080p" } } },
+        preset: { id: "p1", name: "Suscripción", isDirectMode: false, options: { kind: "video", container: "mp4", quality: "1080p" } } },
       { id: "s2", sourceUrl: "https://ejemplo.com/playlist?list=podcast", title: "Podcast semanal de ciencia y tecnología con invitados", kind: "playlist", enabled: false, lastCheckedAt: null, lastError: null, downloadCount: 0, createdAt: now(),
-        preset: { id: "p2", name: "Suscripción", isSmartMode: false, options: { kind: "audio", container: "mp3", quality: "192k" } } },
+        preset: { id: "p2", name: "Suscripción", isDirectMode: false, options: { kind: "audio", container: "mp3", quality: "192k" } } },
       { id: "s3", sourceUrl: "https://ejemplo.com/@canal-borrado", title: "Canal que ya no existe", kind: "channel", enabled: true, lastCheckedAt: new Date(Date.now() - 86_400_000).toISOString(), lastError: "El video ya no existe o no está disponible.", downloadCount: 3, createdAt: now(),
-        preset: { id: "p3", name: "Suscripción", isSmartMode: false, options: { kind: "video", container: "mkv", quality: "best" } } },
+        preset: { id: "p3", name: "Suscripción", isDirectMode: false, options: { kind: "video", container: "mkv", quality: "best" } } },
     ]
   : [];
 let engine: EngineStatus = {
@@ -345,7 +345,7 @@ export const fakeApi: Api = {
     engine = { ...engine, updating: true };
     emit({ type: "engine", status: engine });
     await sleep(1500);
-    engine = { ...engine, updating: false, ytdlpVersion: "2026.11.02", ytdlpSource: "app", ytdlpPath: "~/.local/share/descargador/bin/yt-dlp", latestVersion: "2026.11.02", updateAvailable: false, canRollback: true, checkedAt: now() };
+    engine = { ...engine, updating: false, ytdlpVersion: "2026.11.02", ytdlpSource: "app", ytdlpPath: "~/.local/share/alforja/bin/yt-dlp", latestVersion: "2026.11.02", updateAvailable: false, canRollback: true, checkedAt: now() };
     emit({ type: "engine", status: engine });
     return engine;
   },
@@ -355,25 +355,25 @@ export const fakeApi: Api = {
     emit({ type: "engine", status: engine });
     return engine;
   },
-  async getSmartMode() {
-    return smart;
+  async getDirectMode() {
+    return direct;
   },
-  async saveSmartMode(options, enabled) {
-    smart = { id: "smart-mode", name: "Smart Mode", options, isSmartMode: enabled };
-    return smart;
+  async saveDirectMode(options, enabled) {
+    direct = { id: "direct-mode", name: "Modo directo", options, isDirectMode: enabled };
+    return direct;
   },
-  async smartDownload(url) {
-    if (!smart?.isSmartMode) throw err("smart_off", "Smart Mode está desactivado.");
+  async directDownload(url) {
+    if (!direct?.isDirectMode) throw err("direct_off", "El modo directo está apagado.");
     const r = await fakeApi.parseUrl(url);
     if (r.type === "playlist") return { type: "playlist", info: r };
-    return { type: "started", download: await fakeApi.startDownload(url, smart.options) };
+    return { type: "started", download: await fakeApi.startDownload(url, direct.options) };
   },
   async subscribe(url, options) {
     await sleep(500);
     const r = await fakeApi.parseUrl(url);
     if (r.type !== "playlist") throw err("not_playlist", "Solo te puedes suscribir a un canal o a una lista, no a un video suelto.");
     if (subscriptions.some((s) => s.sourceUrl === r.url)) throw err("already_subscribed", "Ya estás suscrito a ese enlace.");
-    const s: Subscription = { id: uid(), sourceUrl: r.url, title: r.title, kind: r.kind, enabled: true, lastCheckedAt: now(), lastError: null, downloadCount: 0, createdAt: now(), preset: { id: uid(), name: "Suscripción", isSmartMode: false, options } };
+    const s: Subscription = { id: uid(), sourceUrl: r.url, title: r.title, kind: r.kind, enabled: true, lastCheckedAt: now(), lastError: null, downloadCount: 0, createdAt: now(), preset: { id: uid(), name: "Suscripción", isDirectMode: false, options } };
     subscriptions = [s, ...subscriptions];
     return s;
   },

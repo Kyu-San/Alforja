@@ -13,8 +13,8 @@ interface Flow {
   result: ParseResult | null;
   error: string | null;
   token: number;
-  /** La última descarga que Smart Mode puso en la cola sin diálogo (para avisar). */
-  smartStarted: Download | null;
+  /** La última descarga que el modo directo puso en la cola sin diálogo (para avisar). */
+  directStarted: Download | null;
   openInput: (prefill?: string) => void;
   analyze: (url: string) => Promise<void>;
   close: () => void;
@@ -28,7 +28,7 @@ export const useFlow = create<Flow>((set, get) => ({
   result: null,
   error: null,
   token: 0,
-  smartStarted: null,
+  directStarted: null,
   openInput: (prefill = "") => set({ stage: "input", url: prefill, error: null, result: null }),
   analyze: async (raw) => {
     const url = raw.trim();
@@ -36,13 +36,13 @@ export const useFlow = create<Flow>((set, get) => ({
     set({ stage: "parsing", url, error: null, result: null, token });
     const current = () => get().token === token && get().stage === "parsing";
     try {
-      // Smart Mode: un video va directo a la cola; una lista sigue a S04.
-      if (useStore.getState().smart?.isSmartMode) {
-        const r = await api.smartDownload(url);
+      // Modo directo: un video va directo a la cola; una lista sigue a S04.
+      if (useStore.getState().direct?.isDirectMode) {
+        const r = await api.directDownload(url);
         if (!current()) return;
         if (r.type === "started") {
           useStore.getState().add(r.download);
-          set({ stage: "closed", smartStarted: r.download });
+          set({ stage: "closed", directStarted: r.download });
           focusDownload(r.download.id);
         } else {
           set({ stage: "ready", result: { type: "playlist", ...r.info } });

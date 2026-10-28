@@ -2,18 +2,18 @@
 //! local (scripts/test_server.py). Sin internet.
 //!
 //!     python3 scripts/test_server.py <carpeta-con-videos> 8766 &
-//!     DESCARGADOR_TEST_SERVER=http://127.0.0.1:8766 cargo test --test queue_e2e -- --test-threads=1
+//!     ALFORJA_TEST_SERVER=http://127.0.0.1:8766 cargo test --test queue_e2e -- --test-threads=1
 //!
 //! La carpeta la genera `scripts/make_fixtures.sh <carpeta> 8766`.
-//! Sin DESCARGADOR_TEST_SERVER, las pruebas se saltan.
+//! Sin ALFORJA_TEST_SERVER, las pruebas se saltan.
 
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant};
 
-use descargador_lib::db::{Db, NewDownload};
-use descargador_lib::engine::Engine;
-use descargador_lib::models::*;
-use descargador_lib::queue::{Ctx, Queue, Stop};
+use alforja_lib::db::{Db, NewDownload};
+use alforja_lib::engine::Engine;
+use alforja_lib::models::*;
+use alforja_lib::queue::{Ctx, Queue, Stop};
 
 fn opts(kind: Kind, container: &str, quality: &str) -> DownloadOptions {
     DownloadOptions {
@@ -40,7 +40,7 @@ fn harness() -> Option<Harness> {
 }
 
 fn harness_with(with_engine: bool) -> Option<Harness> {
-    let server = std::env::var("DESCARGADOR_TEST_SERVER").ok()?;
+    let server = std::env::var("ALFORJA_TEST_SERVER").ok()?;
     std::env::set_var("NO_PROXY", "127.0.0.1,localhost");
     std::env::set_var("no_proxy", "127.0.0.1,localhost");
     let dir = tempfile::tempdir().unwrap();

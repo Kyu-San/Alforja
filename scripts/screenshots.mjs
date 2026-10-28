@@ -47,7 +47,7 @@ await check("S01 lista con estados, 1040 / 760 / 1440", async () => {
 
 await check("S01 vacía, títulos largos, búsqueda sin resultados", async () => {
   let p = await page("?seed=empty");
-  await p.getByText("Aún no hay descargas").waitFor();
+  await p.getByText("Tu alforja está vacía").waitFor();
   const bar = await p.getByRole("status").last().boundingBox();
   assert.ok(bar.y > 600, "la barra de estado queda abajo");
   await shot(p, "S01-empty");
@@ -84,7 +84,7 @@ await check("S02 sin enlace en el portapapeles, inválido, error y analizando", 
   p = await page("?slow=1");
   await setClipboard(p, "https://ejemplo.com/v/1");
   await p.getByRole("button", { name: "Pegar enlace" }).first().click();
-  await p.getByText("Analizando el enlace…").waitFor();
+  await p.getByText("Leyendo el enlace…").waitFor();
   await shot(p, "S02-parsing");
 });
 
@@ -145,8 +145,8 @@ await check("S05 (vacía y con suscripciones), S06, S07 (4 secciones), S08", asy
   await p.getByText("2026.10.21").waitFor();
   await shot(p, "S11");
   await p.goto(BASE);
-  await p.getByRole("button", { name: "Smart Mode" }).click();
-  await p.getByRole("dialog", { name: "Smart Mode" }).waitFor();
+  await p.getByRole("button", { name: "Modo directo" }).click();
+  await p.getByRole("dialog", { name: "Modo directo" }).waitFor();
   await shot(p, "S08");
 });
 

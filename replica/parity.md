@@ -1,4 +1,4 @@
-# Paridad: Descargador frente a 4K Video Downloader+
+# Paridad: Alforja frente a 4K Video Downloader+
 
 Fecha: 2026-10-28 (tras la segunda ronda de pruebas)  Build: 03b4047  Plataforma probada: Linux
 

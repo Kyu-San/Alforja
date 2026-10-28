@@ -1,4 +1,4 @@
-# Descargador
+# Alforja
 
 App de escritorio (Tauri 2 + React) para bajar videos, audio y listas con
 [yt-dlp](https://github.com/yt-dlp/yt-dlp) y ffmpeg. Uso personal. Nombre provisional.
@@ -7,7 +7,7 @@ App de escritorio (Tauri 2 + React) para bajar videos, audio y listas con
 
 - Node 20+, Rust estable y las dependencias de Tauri de tu sistema: https://tauri.app/start/prerequisites/
 - `yt-dlp` y `ffmpeg` en el PATH (o en la carpeta `bin` de los datos de la app, o en
-  `DESCARGADOR_YTDLP` / `DESCARGADOR_FFMPEG`).
+  `ALFORJA_YTDLP` / `ALFORJA_FFMPEG`).
 
 ## Arrancar
 
@@ -23,7 +23,7 @@ npm run tauri build      # instalador para tu sistema
 ```bash
 cd src-tauri && cargo test                       # unitarias
 python3 scripts/test_server.py <carpeta> 8766 &  # ver src-tauri/tests/queue_e2e.rs
-DESCARGADOR_TEST_SERVER=http://127.0.0.1:8766 cargo test --test queue_e2e -- --test-threads=1
+ALFORJA_TEST_SERVER=http://127.0.0.1:8766 cargo test --test queue_e2e -- --test-threads=1
 npx vite --port 1420 & node e2e/screens.mjs      # interfaz (Playwright)
 ```
 

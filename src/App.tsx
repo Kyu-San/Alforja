@@ -41,7 +41,7 @@ function Events() {
           errorsInARow = 0;
           // Con la ventana en segundo plano: notificación del sistema (si está activada).
           if (!document.hasFocus() && useStore.getState().settings?.notifyOnFinish) {
-            api.notify("Descarga terminada", e.download.title ?? undefined);
+            api.notify("Ya está en tu alforja", e.download.title ?? undefined);
           }
         } else if (e.download.status === "error" && ["engine", "http_403"].includes(e.download.errorCode ?? "")) {
           // Varios fallos seguidos del motor suelen significar que hay que actualizarlo.
@@ -53,13 +53,13 @@ function Events() {
       .then((f) => (off = f));
     return () => off?.();
   }, [apply, toast]);
-  // Aviso cuando Smart Mode pone un video en la cola sin diálogo: solo cuando
+  // Aviso cuando el modo directo pone un video en la cola sin diálogo: solo cuando
   // cambia (no al volver a montar una pantalla).
   useEffect(
     () =>
       useFlow.subscribe((s, prev) => {
-        const d = s.smartStarted;
-        if (d && d !== prev.smartStarted) toast({ kind: "success", title: "En la cola con Smart Mode", body: d.title ?? d.sourceUrl });
+        const d = s.directStarted;
+        if (d && d !== prev.directStarted) toast({ kind: "success", title: "Directo a la cola", body: d.title ?? d.sourceUrl });
       }),
     [toast],
   );

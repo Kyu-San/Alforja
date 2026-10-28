@@ -35,7 +35,7 @@ export const defaultChoice = (outputDir: string): Choice => ({
   outputDir,
 });
 
-const LAST = "descargador.ultima-eleccion";
+const LAST = "alforja.ultima-eleccion";
 
 /** La elección de la última descarga (sin la carpeta, que sale de los ajustes). */
 export function loadLastChoice(outputDir: string): Choice {
@@ -67,7 +67,7 @@ export function saveLastChoice(c: Choice) {
   }
 }
 
-/** Una elección a partir de unas opciones guardadas (Smart Mode, suscripción). */
+/** Una elección a partir de unas opciones guardadas (modo directo, suscripción). */
 export function choiceFromOptions(o: { kind: Kind; container: string; quality: string; subtitleLangs?: string[]; subtitlesEmbedded?: boolean; outputDir?: string | null }, outputDir: string): Choice {
   const c = defaultChoice(o.outputDir || outputDir);
   return o.kind === "audio"

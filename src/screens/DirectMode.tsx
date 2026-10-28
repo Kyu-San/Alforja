@@ -26,18 +26,18 @@ import {
 // Idiomas para elegir subtítulos sin tener un video delante.
 const COMMON_LANGS = ["es", "en", "pt", "fr", "de", "it", "ca", "ja", "ko", "zh"].map((lang) => ({ lang, name: null, auto: false }));
 
-export const smartQualityOptions = [
+export const directQualityOptions = [
   { value: "best", label: "La mejor disponible" },
   ...[2160, 1440, 1080, 720, 480, 360].map((h) => ({ value: `${h}p`, label: `Hasta ${qualityLabel(h)}` })),
 ];
 
 /** S08: elegir una vez cómo se descarga todo; luego, pegar = descargar. */
-export function SmartModeDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const smart = useStore((s) => s.smart);
-  const setSmart = useStore((s) => s.setSmart);
+export function DirectModeDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const direct = useStore((s) => s.direct);
+  const setDirect = useStore((s) => s.setDirect);
   const outputDir = useStore((s) => s.settings?.outputDir ?? "");
   const toast = useToast();
-  const [c, setC] = useState<Choice>(() => (smart ? choiceFromOptions(smart.options, outputDir) : loadLastChoice(outputDir)));
+  const [c, setC] = useState<Choice>(() => (direct ? choiceFromOptions(direct.options, outputDir) : loadLastChoice(outputDir)));
   const [enabled, setEnabled] = useState(true);
   const [busy, setBusy] = useState(false);
   const set = (p: Partial<Choice>) => setC((x) => ({ ...x, ...p }));
@@ -45,17 +45,17 @@ export function SmartModeDialog({ open, onOpenChange }: { open: boolean; onOpenC
   // Al abrir: lo guardado o, la primera vez, la última elección y activado.
   useEffect(() => {
     if (!open) return;
-    setC(smart ? choiceFromOptions(smart.options, outputDir) : loadLastChoice(outputDir));
-    setEnabled(smart ? smart.isSmartMode : true);
+    setC(direct ? choiceFromOptions(direct.options, outputDir) : loadLastChoice(outputDir));
+    setEnabled(direct ? direct.isDirectMode : true);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = async () => {
     setBusy(true);
     try {
-      const p = await api.saveSmartMode(toOptions(c), enabled);
-      setSmart(p);
+      const p = await api.saveDirectMode(toOptions(c), enabled);
+      setDirect(p);
       onOpenChange(false);
-      toast({ kind: "info", title: enabled ? "Smart Mode activado" : "Smart Mode desactivado", body: enabled ? "Pega un enlace y se descarga directamente." : undefined });
+      toast({ kind: "info", title: enabled ? "Modo directo encendido" : "Modo directo apagado", body: enabled ? "Pega un enlace y se baja solo, sin preguntarte." : undefined });
     } catch (e) {
       toast({ kind: "error", title: "No se guardó", body: message(e) });
     } finally {
@@ -67,8 +67,8 @@ export function SmartModeDialog({ open, onOpenChange }: { open: boolean; onOpenC
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Smart Mode"
-      description="Elige una vez cómo quieres tus descargas. Con Smart Mode activado, cada video que pegues se descarga así, sin preguntar. Las listas y los canales siguen mostrando su diálogo."
+      title="Modo directo"
+      description="Elige una vez cómo quieres tus descargas. Con el modo directo encendido, cada video que pegues se baja así, sin preguntarte. Las listas y los canales siguen abriendo su ventana, para que elijas qué videos quieres."
       busy={busy}
       footer={
         <>
@@ -83,16 +83,16 @@ export function SmartModeDialog({ open, onOpenChange }: { open: boolean; onOpenC
     >
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
-          <label htmlFor="smart-on" className="font-medium">
-            Activar Smart Mode
+          <label htmlFor="direct-on" className="font-medium">
+            Encender el modo directo
           </label>
-          <Switch id="smart-on" label="Activar Smart Mode" checked={enabled} onChange={setEnabled} />
+          <Switch id="direct-on" label="Encender el modo directo" checked={enabled} onChange={setEnabled} />
         </div>
         <KindToggle value={c.kind} onChange={(kind) => set({ kind })} />
         <div className="grid grid-cols-2 gap-2">
           {c.kind === "video" ? (
             <>
-              <Select label="Calidad" value={c.videoQuality} onChange={(videoQuality) => set({ videoQuality })} options={smartQualityOptions} />
+              <Select label="Calidad" value={c.videoQuality} onChange={(videoQuality) => set({ videoQuality })} options={directQualityOptions} />
               <Select label="Formato" value={c.videoContainer} onChange={(v) => set({ videoContainer: v as Choice["videoContainer"] })} options={videoContainers} />
             </>
           ) : (

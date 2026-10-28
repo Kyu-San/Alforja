@@ -11,8 +11,8 @@ interface State {
   live: Record<string, Live>;
   settings: Settings | null;
   engine: EngineStatus | null;
-  /** El preset de Smart Mode (activado o no), o null si nunca se configuró. */
-  smart: Preset | null;
+  /** El preset del modo directo (activado o no), o null si nunca se configuró. */
+  direct: Preset | null;
   loaded: boolean;
   loadError: string | null;
   selectedId: string | null;
@@ -26,7 +26,7 @@ interface State {
   setSearch: (q: string) => void;
   setSettings: (s: Settings) => void;
   setEngine: (e: EngineStatus) => void;
-  setSmart: (p: Preset | null) => void;
+  setDirect: (p: Preset | null) => void;
 }
 
 export const useStore = create<State>((set) => ({
@@ -34,7 +34,7 @@ export const useStore = create<State>((set) => ({
   live: {},
   settings: null,
   engine: null,
-  smart: null,
+  direct: null,
   loaded: false,
   loadError: null,
   selectedId: null,
@@ -44,7 +44,7 @@ export const useStore = create<State>((set) => ({
       const [list, settings] = await Promise.all([api.listDownloads(), api.getSettings()]);
       set({ downloads: Object.fromEntries(list.map((d) => [d.id, d])), settings, loaded: true, loadError: null });
       api.engineStatus().then((engine) => set({ engine }), () => {});
-      api.getSmartMode().then((smart) => set({ smart }), () => {});
+      api.getDirectMode().then((direct) => set({ direct }), () => {});
     } catch (e) {
       set({ loaded: true, loadError: (e as { message?: string })?.message ?? String(e) });
     }
@@ -87,7 +87,7 @@ export const useStore = create<State>((set) => ({
   setSearch: (q) => set({ search: q }),
   setSettings: (settings) => set({ settings }),
   setEngine: (engine) => set({ engine }),
-  setSmart: (smart) => set({ smart }),
+  setDirect: (direct) => set({ direct }),
 }));
 
 /** Lista ordenada (lo más nuevo arriba) y filtrada por la búsqueda. */

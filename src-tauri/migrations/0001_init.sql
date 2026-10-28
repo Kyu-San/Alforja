@@ -1,4 +1,4 @@
--- Esquema local (SQLite) del clon de 4K Video Downloader+.
+-- Esquema local (SQLite) de Alforja.
 -- Primera migración: src-tauri/migrations/0001_init.sql
 --
 -- App de escritorio de un solo usuario: no hay user_id ni reglas de acceso
@@ -9,7 +9,7 @@
 -- foreign_keys y journal_mode = wal se fijan al abrir la conexión (db.rs):
 -- no pueden ir dentro de la transacción de una migración.
 
--- Perfiles de formato. Smart Mode es el preset con is_smart_mode = 1.
+-- Perfiles de formato. Modo directo es el preset con is_direct_mode = 1.
 create table presets (
   id                 text primary key,
   name               text not null,
@@ -20,14 +20,14 @@ create table presets (
   subtitle_langs     text not null default '[]' check (json_valid(subtitle_langs)),
   subtitles_embedded integer not null default 0 check (subtitles_embedded in (0,1)),
   output_dir         text,                     -- null = carpeta por defecto de settings
-  is_smart_mode      integer not null default 0 check (is_smart_mode in (0,1)),
+  is_direct_mode      integer not null default 0 check (is_direct_mode in (0,1)),
   created_at         text not null default (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at         text not null default (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   check ((kind = 'video' and container in ('mp4','mkv'))
       or (kind = 'audio' and container in ('mp3','m4a','ogg')))
 );
--- Solo un preset puede ser el de Smart Mode.
-create unique index presets_one_smart_mode on presets (is_smart_mode) where is_smart_mode = 1;
+-- Solo un preset puede ser el de Modo directo.
+create unique index presets_one_direct_mode on presets (is_direct_mode) where is_direct_mode = 1;
 
 -- Playlists y canales pedidos en S04 (agrupan sus descargas).
 create table playlists (

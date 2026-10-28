@@ -1,12 +1,12 @@
 import { axe, expect, paste, rows, test } from "./fixtures";
 
-test.describe("F04 Smart Mode", () => {
+test.describe("F04 Modo directo", () => {
   test("F04-H1 configurar una vez y pegar = descargar, sin diálogo", async ({ page }) => {
     await page.goto("/?seed=empty");
-    const toggle = page.getByRole("button", { name: /^Smart Mode/ });
+    const toggle = page.getByRole("button", { name: /^Modo directo/ });
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
     await toggle.click();
-    const dialog = page.getByRole("dialog", { name: "Smart Mode" });
+    const dialog = page.getByRole("dialog", { name: "Modo directo" });
     await expect(dialog).toBeVisible();
     await axe(page, "S08");
     await dialog.getByRole("radio", { name: "Solo audio" }).click();
@@ -16,37 +16,37 @@ test.describe("F04 Smart Mode", () => {
     await expect(dialog).toBeHidden();
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
 
-    await paste(page, "https://ejemplo.com/v/smart");
-    await expect(page.getByText("En la cola con Smart Mode").first()).toBeVisible();
+    await paste(page, "https://ejemplo.com/v/direct");
+    await expect(page.getByText("Directo a la cola").first()).toBeVisible();
     await expect(page.getByRole("dialog")).toBeHidden();
     const row = rows(page).first();
     await expect(row).toContainText("M4A");
     await expect(row).toBeFocused();
   });
 
-  test("F04-E3 el aviso de Smart Mode no se repite al volver a la lista", async ({ page }) => {
-    await page.goto("/?seed=empty&smart=1");
+  test("F04-E3 el aviso de Modo directo no se repite al volver a la lista", async ({ page }) => {
+    await page.goto("/?seed=empty&direct=1");
     await paste(page, "https://ejemplo.com/v/una-vez");
-    await expect(page.getByText("En la cola con Smart Mode").first()).toBeVisible();
+    await expect(page.getByText("Directo a la cola").first()).toBeVisible();
     await page.getByRole("button", { name: "Cerrar aviso" }).first().click();
-    await expect(page.getByRole("status").filter({ hasText: "En la cola con Smart Mode" })).toHaveCount(0);
+    await expect(page.getByRole("status").filter({ hasText: "Directo a la cola" })).toHaveCount(0);
     await page.getByRole("button", { name: "Suscripciones" }).click();
     await expect(page.getByRole("heading", { name: "Suscripciones", exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("toolbar")).toBeVisible();
     await page.waitForTimeout(500);
-    await expect(page.getByText("En la cola con Smart Mode")).toHaveCount(0);
+    await expect(page.getByText("Directo a la cola")).toHaveCount(0);
   });
 
   test("F04-E4 activado, el botón se ve en color de acento", async ({ page }) => {
-    await page.goto("/?seed=empty&smart=1");
-    const toggle = page.getByRole("button", { name: /^Smart Mode/ });
+    await page.goto("/?seed=empty&direct=1");
+    const toggle = page.getByRole("button", { name: /^Modo directo/ });
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
-    await expect(toggle).toHaveCSS("color", "rgb(123, 147, 255)");
+    await expect(toggle).toHaveCSS("color", "rgb(232, 153, 110)");
   });
 
-  test("F04-E1 con Smart Mode, una lista sigue mostrando su diálogo con esas opciones", async ({ page }) => {
-    await page.goto("/?seed=empty&smart=1");
+  test("F04-E1 con Modo directo, una lista sigue mostrando su diálogo con esas opciones", async ({ page }) => {
+    await page.goto("/?seed=empty&direct=1");
     await paste(page, "https://ejemplo.com/playlist?list=PL1");
     const dialog = page.getByRole("dialog", { name: "Descargar la lista" });
     await expect(dialog).toBeVisible();
@@ -54,9 +54,9 @@ test.describe("F04 Smart Mode", () => {
   });
 
   test("F04-E2 desactivarlo vuelve al diálogo de siempre", async ({ page }) => {
-    await page.goto("/?seed=empty&smart=1");
-    await page.getByRole("button", { name: /^Smart Mode/ }).click();
-    await page.getByRole("switch", { name: "Activar Smart Mode" }).click();
+    await page.goto("/?seed=empty&direct=1");
+    await page.getByRole("button", { name: /^Modo directo/ }).click();
+    await page.getByRole("switch", { name: "Encender el modo directo" }).click();
     await page.getByRole("button", { name: "Guardar" }).click();
     await paste(page, "https://ejemplo.com/v/normal");
     await expect(page.getByRole("dialog", { name: "Descargar" })).toBeVisible();
@@ -79,21 +79,21 @@ test.describe("F04 Smart Mode", () => {
     await expect(dialog.getByLabel("Formato")).toContainText("MKV");
   });
 
-  test("F04-E5 Smart Mode con un enlace que falla muestra el error", async ({ page }) => {
-    await page.goto("/?seed=empty&smart=1");
-    await expect(page.getByRole("button", { name: /^Smart Mode/ })).toHaveAttribute("aria-pressed", "true");
+  test("F04-E5 Modo directo con un enlace que falla muestra el error", async ({ page }) => {
+    await page.goto("/?seed=empty&direct=1");
+    await expect(page.getByRole("button", { name: /^Modo directo/ })).toHaveAttribute("aria-pressed", "true");
     await paste(page, "https://ejemplo.com/video-privado");
-    await expect(page.getByRole("dialog", { name: "No se pudo analizar" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Ese enlace no se pudo leer" })).toBeVisible();
     await expect(page.getByRole("alert")).toContainText("Es privado");
     await expect(rows(page)).toHaveCount(0);
   });
 
-  test("F04-E7 configurar Smart Mode solo con teclado", async ({ page }) => {
+  test("F04-E7 configurar Modo directo solo con teclado", async ({ page }) => {
     await page.goto("/?seed=empty");
-    const toggle = page.getByRole("button", { name: /^Smart Mode/ });
+    const toggle = page.getByRole("button", { name: /^Modo directo/ });
     await toggle.focus();
     await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog", { name: "Smart Mode" });
+    const dialog = page.getByRole("dialog", { name: "Modo directo" });
     await expect(dialog).toBeVisible();
     // El foco empieza dentro del diálogo; Guardar se alcanza con Tab.
     const save = dialog.getByRole("button", { name: "Guardar" });
@@ -105,7 +105,7 @@ test.describe("F04 Smart Mode", () => {
   });
 
   test("F01-E17 una elección guardada corrupta no rompe nada", async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem("descargador.ultima-eleccion", "{no es json"));
+    await page.addInitScript(() => localStorage.setItem("alforja.ultima-eleccion", "{no es json"));
     await page.goto("/?seed=empty");
     await paste(page, "https://ejemplo.com/v/1");
     const dialog = page.getByRole("dialog", { name: "Descargar" });

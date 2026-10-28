@@ -17,7 +17,7 @@ test("NOT-H1 con la ventana detrás, avisa al terminar", async ({ page }) => {
   await page.addInitScript(() => (document.hasFocus = () => false));
   await page.goto("/?seed=empty");
   const sent = await downloadOne(page);
-  expect(sent).toEqual([{ title: "Descarga terminada", body: "Documental: el viaje de la luz (4K)" }]);
+  expect(sent).toEqual([{ title: "Ya está en tu alforja", body: "Documental: el viaje de la luz (4K)" }]);
 });
 
 test("NOT-E1 con el aviso apagado, no avisa", async ({ page }) => {

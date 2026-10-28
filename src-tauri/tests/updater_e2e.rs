@@ -8,7 +8,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
 
-use descargador_lib::updater::{asset_name, binary_name, Updater};
+use alforja_lib::updater::{asset_name, binary_name, Updater};
 use sha2::{Digest, Sha256};
 
 type Files = Arc<Mutex<HashMap<String, Vec<u8>>>>;

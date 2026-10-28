@@ -82,7 +82,7 @@ export interface Preset {
   id: string;
   name: string;
   options: DownloadOptions;
-  isSmartMode: boolean;
+  isDirectMode: boolean;
 }
 
 export interface Subscription {
@@ -98,8 +98,8 @@ export interface Subscription {
   createdAt: string;
 }
 
-/** Pegar con Smart Mode: la descarga ya en la cola, o la lista para elegir. */
-export type SmartResult = { type: "started"; download: Download } | { type: "playlist"; info: PlaylistInfo };
+/** Pegar con el modo directo: la descarga ya en la cola, o la lista para elegir. */
+export type DirectResult = { type: "started"; download: Download } | { type: "playlist"; info: PlaylistInfo };
 
 export interface Settings {
   outputDir: string;
@@ -169,9 +169,9 @@ export interface Api {
   engineCheck(): Promise<EngineStatus>;
   engineUpdate(): Promise<EngineStatus>;
   engineRollback(): Promise<EngineStatus>;
-  getSmartMode(): Promise<Preset | null>;
-  saveSmartMode(options: DownloadOptions, enabled: boolean): Promise<Preset>;
-  smartDownload(url: string): Promise<SmartResult>;
+  getDirectMode(): Promise<Preset | null>;
+  saveDirectMode(options: DownloadOptions, enabled: boolean): Promise<Preset>;
+  directDownload(url: string): Promise<DirectResult>;
   subscribe(url: string, options: DownloadOptions): Promise<Subscription>;
   listSubscriptions(): Promise<Subscription[]>;
   setSubscriptionEnabled(id: string, enabled: boolean): Promise<Subscription>;

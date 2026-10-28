@@ -1,4 +1,4 @@
-# Plan de pruebas: Descargador
+# Plan de pruebas: Alforja
 
 Build: segunda ronda sobre 5f290ed (primera: 5636673)  Fecha: 2026-10-26  Entorno: local, Linux, sin acceso a YouTube ni GitHub
 

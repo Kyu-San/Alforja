@@ -189,14 +189,14 @@ pub enum ParseResult {
     Playlist(PlaylistInfo),
 }
 
-/// Un perfil de formato: el de Smart Mode o el de una suscripción.
+/// Un perfil de formato: el del modo directo o el de una suscripción.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Preset {
     pub id: String,
     pub name: String,
     pub options: DownloadOptions,
-    pub is_smart_mode: bool,
+    pub is_direct_mode: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -216,11 +216,11 @@ pub struct Subscription {
     pub created_at: String,
 }
 
-/// Lo que devuelve "pegar" con Smart Mode: la descarga ya creada o, si el
+/// Lo que devuelve "pegar" con el modo directo: la descarga ya creada o, si el
 /// enlace es una lista, el análisis para elegir en S04.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(tag = "type", rename_all = "lowercase")]
-pub enum SmartResult {
+pub enum DirectResult {
     Started { download: Download },
     Playlist { info: PlaylistInfo },
 }
