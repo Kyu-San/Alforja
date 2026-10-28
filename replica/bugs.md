@@ -16,6 +16,7 @@ Build de partida: d3de251. Entorno: Linux, Chromium 1.63 (Playwright) para la in
 | BUG-009 | S4 | Smart Mode activado no se ve en color de acento | arreglado en 55dc856 (antes de publicarse) |
 | BUG-010 | S4 | La etiqueta "Frecuencia" descentra el selector en la cabecera de S05 | arreglado en 55dc856 + 0230030 (antes de publicarse) |
 | BUG-011 | S3 | Esc no vuelve a la lista si el foco está en la página | arreglado en f7cbb22 |
+| BUG-012 | S3 | En S05 y S07, cualquier cambio roba el foco del teclado | arreglado en bfaaff4 |
 
 Ningún S1 ni S2. BUG-008 a BUG-010 aparecieron al construir Smart Mode y Suscripciones y se arreglaron antes de guardarlos.
 
@@ -187,6 +188,24 @@ Actual: no pasa nada: el Esc se escuchaba en el contenedor de la pantalla y no l
 Evidence: e2e `NAV-E1` (fallaba siempre antes del arreglo).
 Status: fixed in f7cbb22 (se escucha en la ventana; sigue sin actuar si hay un diálogo, menú o lista abiertos).
 
+### BUG-012: En S05 y S07, cualquier cambio roba el foco del teclado
+
+- Severity: S3
+- Flow / case: F05 / F05-E6; S07 / S07-E1
+- Screen: S05, S06, S07
+- Build: 5f290ed  Browser / device: Chromium 1.63, 1040px
+
+Steps
+1. Abrir Suscripciones (o Preferencias) y llegar con Tab a un interruptor.
+2. Pulsar Espacio.
+3. Pulsar Tab.
+
+Expected: el interruptor cambia y conserva el foco; Tab lleva al siguiente control ("Comprobar ahora").
+Actual: tras el cambio, el foco salta al contenedor `<main>` y Tab vuelve al principio de la fila. Quien usa el teclado pierde su sitio con cada ajuste.
+Evidence: e2e `F05-E6` y `S07-E1` (fallaban siempre antes del arreglo); traza: tras Espacio, `document.activeElement` = `MAIN`.
+Suspected cause: `Screen` enfocaba `<main>` con un `ref` en línea; React lo vuelve a llamar en cada render, así que cualquier actualización de la pantalla movía el foco.
+Status: fixed in bfaaff4 (se enfoca una sola vez, al entrar).
+
 ## Por comprobar (no reproducido)
 
 - **YouTube de verdad.** Todo el motor se probó con MP4, HLS, RSS y páginas `<video>` locales; YouTube y GitHub están bloqueados en este entorno.
@@ -194,4 +213,7 @@ Status: fixed in f7cbb22 (se escucha en la ventana; sigue sin actuar si hay un d
 - **La raíz de un canal (`@nombre`)** devuelve pestañas, no videos (ya en features.csv como parcial).
 - **Disco lleno** a mitad de descarga: clasificado (`disk_full`) pero no provocado.
 - **Proxy con usuario y contraseña** visible en la lista de procesos (anotado en backend.md).
+- **Borrar una suscripción mientras se comprueba**: las descargas que intente crear esa comprobación fallarían por la clave ajena y se registraría un error; no se pudo provocar el cruce.
+- **El temporizador de comprobación en segundo plano** (cada 10 minutos, 20 s tras arrancar): la lógica de "a cuáles les toca" está probada, el bucle en sí no.
+- **Notificaciones en Windows y macOS**: probadas solo en Linux con dunst.
 - **El modo de desarrollo arranca en blanco** si la app abre antes que el servidor de Vite (visto en Xvfb). Solo afecta a `npm run tauri dev` sin esperar; la app compilada carga de `dist/`.

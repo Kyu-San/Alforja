@@ -1,6 +1,6 @@
 # Plan de pruebas: Descargador
 
-Build: 5636673 (inicio en d3de251)  Fecha: 2026-10-26  Entorno: local, Linux, sin acceso a YouTube ni GitHub
+Build: segunda ronda sobre 5f290ed (primera: 5636673)  Fecha: 2026-10-26  Entorno: local, Linux, sin acceso a YouTube ni GitHub
 
 Tres niveles:
 
