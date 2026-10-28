@@ -28,6 +28,22 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Video",
+    "shortDescription": "Baja videos, audio y listas pegando un enlace.",
+    "longDescription": "Alforja baja videos, audio, subtítulos, listas y canales pegando un enlace, con el motor yt-dlp. Modo directo para bajar con un clic, suscripciones que bajan lo nuevo solas y una cola que se puede pausar y reanudar. Uso personal.",
+    "linux": {
+      "deb": {
+        "depends": [
+          "ffmpeg"
+        ]
+      }
+    }
   }
 }

@@ -1,0 +1,55 @@
+# Comprobaciones en cada push: tipos, pruebas de Rust (con yt-dlp y ffmpeg reales
+# contra un servidor local), interfaz con Playwright y la búsqueda de restos del original.
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependencias del sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf ffmpeg
+          pipx install yt-dlp
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - run: npm ci
+      - run: npx tsc -b
+
+      - name: Videos de prueba y servidor local
+        run: |
+          scripts/make_fixtures.sh "$RUNNER_TEMP/fixtures" 8766
+          python3 scripts/test_server.py "$RUNNER_TEMP/fixtures" 8766 &
+          sleep 1
+
+      - name: Rust (motor real)
+        working-directory: src-tauri
+        env:
+          ALFORJA_TEST_SERVER: http://127.0.0.1:8766
+        run: cargo test -- --test-threads=1
+
+      - name: Interfaz (Playwright + axe)
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+      - name: Nada del original
+        run: |
+          rm -rf src-tauri/target
+          python3 scripts/sweep.py . --config replica/brand.json
