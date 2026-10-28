@@ -1,0 +1,408 @@
+{
+  "_about": "Temas base de la skill más los propios de un descargador de video (añadidos para 4K Video Downloader+). Patrones en inglés y español.",
+  "request_patterns": [
+    "\\bi wish\\b",
+    "\\bplease add\\b",
+    "\\bwould be (nice|great|good|helpful)\\b",
+    "\\bwould love\\b",
+    "\\bneeds? (a|an|the|to|more)\\b",
+    "\\bno way to\\b",
+    "\\bthere'?s no (way|option)\\b",
+    "\\b(can'?t|cannot|unable to) (even )?(add|change|edit|set|choose|export|import|customi[sz]e|connect|undo|delete|turn off)\\b",
+    "\\b(missing|lacks|lacking)\\b",
+    "\\bdoesn'?t (have|support|let|allow)\\b",
+    "\\bif only\\b",
+    "\\bfeature request\\b",
+    "\\bwhy (can'?t|isn'?t|doesn'?t)\\b"
+  ],
+  "themes": [
+    {
+      "id": "pricing",
+      "label": "Price and paywalls",
+      "kind": "complaint",
+      "patterns": [
+        "\\bexpensive\\b",
+        "\\boverpriced\\b",
+        "\\bpric(e|es|ey|ing)\\b",
+        "\\bpaywall",
+        "\\bsubscription\\b",
+        "\\bper (month|seat|user)\\b",
+        "\\bfree (plan|tier|version)\\b",
+        "\\bupgrade to\\b",
+        "\\bpremium\\b",
+        "\\bnot worth\\b",
+        "\\bcost(s|ly)?\\b"
+      ]
+    },
+    {
+      "id": "billing",
+      "label": "Billing, cancelling and refunds",
+      "kind": "complaint",
+      "patterns": [
+        "\\bcharged\\b",
+        "\\brefund",
+        "\\bcancel(l?ing|l?ed|lation)?\\b",
+        "\\bauto.?renew",
+        "\\bhidden (fee|charge)",
+        "\\bbilling\\b",
+        "\\bscam\\b",
+        "\\bcredit card\\b"
+      ]
+    },
+    {
+      "id": "bugs",
+      "label": "Bugs and crashes",
+      "kind": "complaint",
+      "patterns": [
+        "\\bcrash(es|ed|ing)?\\b",
+        "\\bbugs?\\b",
+        "\\bbuggy\\b",
+        "\\bglitch",
+        "\\bfreez(e|es|ing)\\b",
+        "\\bbroken\\b",
+        "\\b(doesn'?t|does not|stopped) work",
+        "\\bnot working\\b",
+        "\\berror\\b"
+      ]
+    },
+    {
+      "id": "performance",
+      "label": "Slow, laggy, heavy",
+      "kind": "complaint",
+      "patterns": [
+        "\\bslow\\b",
+        "\\blag(gy|s)?\\b",
+        "\\bloading\\b",
+        "\\btakes forever\\b",
+        "\\bbattery\\b",
+        "\\bsluggish\\b",
+        "\\bheavy\\b"
+      ]
+    },
+    {
+      "id": "data",
+      "label": "Sync and lost data",
+      "kind": "complaint",
+      "patterns": [
+        "\\bsync(ing|s|ed)?\\b",
+        "\\blost (my|all)\\b",
+        "\\bdisappear",
+        "\\bdata loss\\b",
+        "\\bwiped\\b",
+        "\\bbackup\\b",
+        "\\bduplicat"
+      ]
+    },
+    {
+      "id": "ux",
+      "label": "Confusing or clunky to use",
+      "kind": "complaint",
+      "patterns": [
+        "\\bconfus",
+        "\\bhard to (use|find|navigate|understand)\\b",
+        "\\bcomplicated\\b",
+        "\\bcluttered\\b",
+        "\\bunintuitive\\b",
+        "\\bnot intuitive\\b",
+        "\\bclunky\\b",
+        "\\btoo many (steps|clicks|taps)\\b",
+        "\\blearning curve\\b",
+        "\\bcan'?t find\\b"
+      ]
+    },
+    {
+      "id": "support",
+      "label": "Support that does not answer",
+      "kind": "complaint",
+      "patterns": [
+        "\\bcustomer (service|support)\\b",
+        "\\bsupport (team|is|was)\\b",
+        "\\bno (response|reply)\\b",
+        "\\bnever (replied|responded|heard back)\\b",
+        "\\bticket\\b",
+        "\\bchat ?bot\\b"
+      ]
+    },
+    {
+      "id": "account",
+      "label": "Login and account problems",
+      "kind": "complaint",
+      "patterns": [
+        "\\blog ?in\\b",
+        "\\bsign ?in\\b",
+        "\\bpassword\\b",
+        "\\blocked out\\b",
+        "\\bverification\\b",
+        "\\b2fa\\b",
+        "\\bdelete (my )?account\\b"
+      ]
+    },
+    {
+      "id": "notifications",
+      "label": "Notifications and spam",
+      "kind": "complaint",
+      "patterns": [
+        "\\bnotification",
+        "\\bspam",
+        "\\btoo many emails\\b",
+        "\\bpush\\b",
+        "\\breminders?\\b"
+      ]
+    },
+    {
+      "id": "ads",
+      "label": "Ads",
+      "kind": "complaint",
+      "patterns": [
+        "\\bads\\b",
+        "\\badvert",
+        "\\bad.?supported\\b",
+        "\\bpop.?ups?\\b"
+      ]
+    },
+    {
+      "id": "updates",
+      "label": "A redesign or update made it worse",
+      "kind": "complaint",
+      "patterns": [
+        "\\b(new|latest|recent) (update|version|design)\\b",
+        "\\bredesign",
+        "\\bused to be\\b",
+        "\\bbring back\\b",
+        "\\bsince the update\\b"
+      ]
+    },
+    {
+      "id": "privacy",
+      "label": "Privacy and permissions",
+      "kind": "complaint",
+      "patterns": [
+        "\\bprivacy\\b",
+        "\\btracking\\b",
+        "\\bsell(s|ing)? (my )?data\\b",
+        "\\bpermissions?\\b",
+        "\\bcreepy\\b"
+      ]
+    },
+    {
+      "id": "integrations",
+      "label": "Integrations, import and export",
+      "kind": "request",
+      "patterns": [
+        "\\bintegrat",
+        "\\bzapier\\b",
+        "\\bgoogle (calendar|sheets|drive)\\b",
+        "\\boutlook\\b",
+        "\\bslack\\b",
+        "\\bapi\\b",
+        "\\bexport\\b",
+        "\\bimport\\b",
+        "\\bcsv\\b",
+        "\\bwebhook"
+      ]
+    },
+    {
+      "id": "platforms",
+      "label": "Platforms, offline and mobile",
+      "kind": "request",
+      "patterns": [
+        "\\boffline\\b",
+        "\\bandroid\\b",
+        "\\bipad\\b",
+        "\\btablet\\b",
+        "\\bdesktop app\\b",
+        "\\bmac app\\b",
+        "\\bwindows\\b",
+        "\\bmobile (app|version)\\b",
+        "\\bweb version\\b"
+      ]
+    },
+    {
+      "id": "customisation",
+      "label": "Customisation and control",
+      "kind": "request",
+      "patterns": [
+        "\\bcustomi[sz]",
+        "\\bdark mode\\b",
+        "\\btheme\\b",
+        "\\bbranding\\b",
+        "\\bwhite.?label\\b",
+        "\\btemplates?\\b",
+        "\\bsettings?\\b",
+        "\\boption to\\b"
+      ]
+    },
+    {
+      "id": "collaboration",
+      "label": "Teams and sharing",
+      "kind": "request",
+      "patterns": [
+        "\\bteam(s|mates?)?\\b",
+        "\\bshar(e|ing)\\b",
+        "\\bcollaborat",
+        "\\bmultiple (users|accounts|people)\\b",
+        "\\broles?\\b",
+        "\\bpermissions for\\b"
+      ]
+    },
+    {
+      "id": "quality_cap",
+      "label": "No baja la calidad pedida (4K/8K, se queda en 1080p)",
+      "kind": "complaint",
+      "patterns": [
+        "\\b(only|just|stuck at|max(imum)?|capped at|limited to) ?(720|1080)p?\\b",
+        "\\b(4k|8k|2160p?|1440p?)\\b.{0,40}\\b(not|isn'?t|doesn'?t|won'?t|never|no)\\b",
+        "\\bwrong (quality|resolution)\\b",
+        "\\bsolo (720|1080)p?\\b",
+        "\\bno (baja|descarga) en 4k\\b",
+        "\\b(only|just)\\b.{0,25}\\b(720|1080)p?\\b",
+        "\\b(never|not|no|won'?t|can'?t|cannot)\\b.{0,20}\\b(4k|8k|2160p?)\\b"
+      ]
+    },
+    {
+      "id": "stuck",
+      "label": "Descargas atascadas o que no avanzan",
+      "kind": "complaint",
+      "patterns": [
+        "\\bstuck\\b",
+        "\\bstall(s|ed|ing)?\\b",
+        "\\bhang(s|ing)?\\b",
+        "\\bat 0 ?%",
+        "\\b(parsing|analy[sz]ing)\\b.{0,30}\\b(forever|stuck|never)\\b",
+        "\\batascad",
+        "\\bse queda\\b"
+      ]
+    },
+    {
+      "id": "breaks",
+      "label": "Deja de funcionar cuando YouTube cambia (403, errores)",
+      "kind": "complaint",
+      "patterns": [
+        "\\b403\\b",
+        "\\bforbidden\\b",
+        "\\b(stopped|stops|no longer|doesn'?t) (work|download)",
+        "\\bcan'?t (download|parse) anymore\\b",
+        "\\bafter (the|an?) (latest )?update\\b",
+        "\\byoutube (changed|update)",
+        "\\bdej[óo] de funcionar\\b"
+      ]
+    },
+    {
+      "id": "free_limits",
+      "label": "Límites del plan gratis (descargas al día, videos por lista)",
+      "kind": "complaint",
+      "patterns": [
+        "\\b\\d+ (downloads|videos) (a|per) day\\b",
+        "\\bdaily limit\\b",
+        "\\blimit(ed|s)? to \\d+\\b",
+        "\\b(free|starter) (version|plan|tier)\\b.{0,60}\\blimit",
+        "\\bonly \\d+ videos?\\b",
+        "\\blímite\\b",
+        "\\b\\d+ ?(videos?|downloads?) limit\\b",
+        "\\blimit of \\d+\\b"
+      ]
+    },
+    {
+      "id": "licensing",
+      "label": "Licencias, activación y dispositivos",
+      "kind": "complaint",
+      "patterns": [
+        "\\blicen[cs]e\\b",
+        "\\bactivat(e|ion|ed)\\b",
+        "\\b(lifetime|perpetual)\\b",
+        "\\bdevices?\\b.{0,30}\\blimit",
+        "\\bkey\\b.{0,20}\\b(invalid|not work|expired)",
+        "\\blicencia\\b"
+      ]
+    },
+    {
+      "id": "ads",
+      "label": "Anuncios y avisos para pagar",
+      "kind": "complaint",
+      "patterns": [
+        "\\bads?\\b",
+        "\\badvert",
+        "\\bpop.?ups?\\b",
+        "\\bnag(s|ging)?\\b",
+        "\\bupsell",
+        "\\banuncios?\\b"
+      ]
+    },
+    {
+      "id": "antivirus",
+      "label": "Antivirus, adware o desconfianza",
+      "kind": "complaint",
+      "patterns": [
+        "\\bvirus\\b",
+        "\\bmalware\\b",
+        "\\badware\\b",
+        "\\btrojan\\b",
+        "\\bantivirus\\b",
+        "\\bbundled?\\b",
+        "\\bsuspicious\\b"
+      ]
+    },
+    {
+      "id": "speed",
+      "label": "Lento o con la velocidad limitada",
+      "kind": "complaint",
+      "patterns": [
+        "\\bslow(ly|er)?\\b",
+        "\\bthrottl",
+        "\\bspeed\\b",
+        "\\btakes forever\\b",
+        "\\blent[oa]\\b"
+      ]
+    },
+    {
+      "id": "audio",
+      "label": "Audio desincronizado, sin sonido o idioma equivocado",
+      "kind": "complaint",
+      "patterns": [
+        "\\bout of sync\\b",
+        "\\bno (sound|audio)\\b",
+        "\\baudio\\b.{0,30}\\b(missing|wrong|dubbed|language)\\b",
+        "\\bwrong language\\b",
+        "\\bdubbed\\b",
+        "\\bsin sonido\\b"
+      ]
+    },
+    {
+      "id": "subtitles",
+      "label": "Subtítulos",
+      "kind": "request",
+      "patterns": [
+        "\\bsubtitles?\\b",
+        "\\bcaptions?\\b",
+        "\\bsrt\\b",
+        "\\bsubtítulos?\\b"
+      ]
+    },
+    {
+      "id": "playlists",
+      "label": "Listas, canales y suscripciones",
+      "kind": "request",
+      "patterns": [
+        "\\bplaylists?\\b",
+        "\\bchannels?\\b",
+        "\\bsubscri(be|ption)s?\\b.{0,30}\\b(channel|auto)",
+        "\\blistas?\\b",
+        "\\bcanal(es)?\\b"
+      ]
+    },
+    {
+      "id": "private",
+      "label": "Videos privados, con edad o que piden iniciar sesión",
+      "kind": "complaint",
+      "patterns": [
+        "\\bprivate\\b",
+        "\\bage.?restrict",
+        "\\bsign.?in\\b",
+        "\\blog.?in\\b",
+        "\\bmembers.?only\\b",
+        "\\bcookies?\\b",
+        "\\bprivad[oa]s?\\b"
+      ]
+    }
+  ]
+}
