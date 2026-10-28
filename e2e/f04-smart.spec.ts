@@ -78,4 +78,38 @@ test.describe("F04 Smart Mode", () => {
     await expect(dialog.getByRole("radio", { name: /^720p/ })).toBeChecked();
     await expect(dialog.getByLabel("Formato")).toContainText("MKV");
   });
+
+  test("F04-E5 Smart Mode con un enlace que falla muestra el error", async ({ page }) => {
+    await page.goto("/?seed=empty&smart=1");
+    await expect(page.getByRole("button", { name: /^Smart Mode/ })).toHaveAttribute("aria-pressed", "true");
+    await paste(page, "https://ejemplo.com/video-privado");
+    await expect(page.getByRole("dialog", { name: "No se pudo analizar" })).toBeVisible();
+    await expect(page.getByRole("alert")).toContainText("Es privado");
+    await expect(rows(page)).toHaveCount(0);
+  });
+
+  test("F04-E7 configurar Smart Mode solo con teclado", async ({ page }) => {
+    await page.goto("/?seed=empty");
+    const toggle = page.getByRole("button", { name: /^Smart Mode/ });
+    await toggle.focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog", { name: "Smart Mode" });
+    await expect(dialog).toBeVisible();
+    // El foco empieza dentro del diálogo; Guardar se alcanza con Tab.
+    const save = dialog.getByRole("button", { name: "Guardar" });
+    for (let i = 0; i < 25 && !(await save.evaluate((e) => e === document.activeElement)); i++) await page.keyboard.press("Tab");
+    await expect(save).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(dialog).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("F01-E17 una elección guardada corrupta no rompe nada", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("descargador.ultima-eleccion", "{no es json"));
+    await page.goto("/?seed=empty");
+    await paste(page, "https://ejemplo.com/v/1");
+    const dialog = page.getByRole("dialog", { name: "Descargar" });
+    await expect(dialog.getByRole("radio", { name: "Video" })).toBeChecked();
+    await expect(dialog.getByLabel("Formato")).toContainText("MP4");
+  });
 });

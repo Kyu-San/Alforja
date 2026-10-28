@@ -47,6 +47,15 @@ test.describe("S07 preferencias", () => {
     await expect(page.getByLabel("Navegador")).toContainText("Firefox");
   });
 
+  test("S07-E1 cambiar un ajuste con el teclado no pierde el foco", async ({ page }) => {
+    await page.goto("/#/preferencias/general");
+    const sw = page.getByRole("switch", { name: "Avisar al terminar" });
+    await sw.focus();
+    await page.keyboard.press("Space");
+    await expect(sw).not.toBeChecked();
+    await expect(sw).toBeFocused();
+  });
+
   test("S07-H2 avisar al terminar se puede apagar", async ({ page }) => {
     await page.goto("/#/preferencias/general");
     const sw = page.getByRole("switch", { name: "Avisar al terminar" });

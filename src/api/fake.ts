@@ -399,7 +399,10 @@ export const fakeApi: Api = {
     emit({ type: "subscriptionChecked", id, newDownloads: n });
     return n;
   },
-  async notify() {},
+  async notify(title, body) {
+    // Para las pruebas: qué notificaciones se habrían enviado.
+    ((window as unknown as { __notifications?: unknown[] }).__notifications ??= []).push({ title, body });
+  },
   async onEvent(cb) {
     listeners.add(cb);
     // Como la app real al arrancar: lo que estaba en cola empieza.

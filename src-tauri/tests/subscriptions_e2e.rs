@@ -15,6 +15,8 @@ use descargador_lib::queue::{Ctx, Queue, Sink};
 use descargador_lib::subscriptions;
 
 /// Un RSS que cambia: cada item es (guid, archivo del servidor de clips).
+static FEED_DOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 fn feed_server(items: Arc<Mutex<Vec<(String, String)>>>, clips: String) -> String {
     let l = TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = format!("http://{}", l.local_addr().unwrap());
@@ -40,6 +42,10 @@ fn feed_server(items: Arc<Mutex<Vec<(String, String)>>>, clips: String) -> Strin
                     .collect::<String>()
             );
             let mut s = &s;
+            if FEED_DOWN.load(std::sync::atomic::Ordering::SeqCst) {
+                let _ = write!(s, "HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+                continue;
+            }
             let _ = write!(s, "HTTP/1.1 200 OK\r\nContent-Type: application/rss+xml\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
         }
     });
@@ -147,4 +153,22 @@ async fn rules_and_unsubscribe() {
     assert_eq!(left.len(), 1);
     assert_eq!(left[0].subscription_id, None);
     assert!(h.db.get_preset(&sub.preset.id).unwrap().is_none());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn f05_e7_a_failing_source_is_recorded_and_recovers() {
+    let Some(h) = setup() else { return };
+    let sub = subscriptions::subscribe(&h.db, &h.engine, &h.feed, &opts()).await.unwrap();
+    h.items.lock().unwrap().push(("c3".into(), "clip2.mp4".into()));
+
+    FEED_DOWN.store(true, std::sync::atomic::Ordering::SeqCst);
+    assert!(subscriptions::check(&h.db, &h.engine, &h.sink, &sub).await.is_err());
+    let s = h.db.get_subscription(&sub.id).unwrap().unwrap();
+    assert!(s.last_error.is_some(), "el fallo queda apuntado para S05");
+    assert!(h.db.list_downloads(None).unwrap().is_empty());
+
+    // Vuelve la fuente: el video que se publicó mientras tanto no se pierde.
+    FEED_DOWN.store(false, std::sync::atomic::Ordering::SeqCst);
+    assert_eq!(subscriptions::check(&h.db, &h.engine, &h.sink, &sub).await.unwrap(), 1);
+    assert_eq!(h.db.get_subscription(&sub.id).unwrap().unwrap().last_error, None);
 }

@@ -78,4 +78,25 @@ test.describe("F05 suscripciones", () => {
     await page.getByRole("option", { name: "Una vez al día" }).click();
     await expect(page.getByLabel("Frecuencia")).toContainText("Una vez al día");
   });
+
+  test("F05-E6 S05 solo con teclado: pausar, comprobar y darse de baja", async ({ page }) => {
+    await page.goto("/?subs=1#/suscripciones");
+    const list = page.getByRole("list", { name: "Suscripciones" });
+    await expect(list.getByRole("listitem")).toHaveCount(3);
+    const sw = page.getByRole("switch", { name: "Pausar Canal de cocina" });
+    await sw.focus();
+    await page.keyboard.press("Space");
+    await expect(list.getByRole("listitem").first()).toContainText("En pausa");
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("button", { name: "Comprobar ahora Canal de cocina" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("1 video nuevo en la cola").first()).toBeVisible();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+    const confirm = page.getByRole("dialog", { name: "¿Darse de baja?" });
+    await expect(confirm).toBeVisible();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+    await expect(list.getByRole("listitem")).toHaveCount(2);
+  });
 });

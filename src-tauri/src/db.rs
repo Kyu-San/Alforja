@@ -571,6 +571,37 @@ mod tests {
     }
 
     #[test]
+    fn smart_mode_preset_roundtrip_and_survives_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("t.sqlite3");
+        let o = DownloadOptions {
+            kind: Kind::Video,
+            container: "mkv".into(),
+            quality: "720p".into(),
+            audio_lang: Some("en".into()),
+            subtitle_langs: vec!["es".into(), "en".into()],
+            subtitles_embedded: true,
+            output_dir: Some("/música y vídeos 🎬".into()),
+        };
+        {
+            let db = Db::open(&path).unwrap();
+            assert!(db.get_preset("smart-mode").unwrap().is_none());
+            let p = db.save_preset(Some("smart-mode"), "Smart Mode", &o, true).unwrap();
+            assert_eq!((p.options.clone(), p.is_smart_mode), (o.clone(), true));
+            // Apagarlo conserva las opciones.
+            db.save_preset(Some("smart-mode"), "Smart Mode", &o, false).unwrap();
+        }
+        let db = Db::open(&path).unwrap();
+        let p = db.get_preset("smart-mode").unwrap().unwrap();
+        assert_eq!((p.options.clone(), p.is_smart_mode), (o.clone(), false));
+        // Un segundo preset de Smart Mode activado no cabe.
+        let mut other = p.clone();
+        other.is_smart_mode = true;
+        db.save_preset(Some("smart-mode"), "Smart Mode", &other.options, true).unwrap();
+        assert!(db.save_preset(Some("otro"), "Otro", &other.options, true).is_err());
+    }
+
+    #[test]
     fn playlist_insert_is_atomic() {
         let db = Db::open_in_memory().unwrap();
         let info = PlaylistInfo { url: "https://l".into(), id: "L".into(), title: "Lista".into(), uploader: None, kind: "playlist".into(), entries: vec![] };
