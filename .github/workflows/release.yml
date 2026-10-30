@@ -1,4 +1,4 @@
-# Instaladores de Alforja para Windows, macOS y Linux.
+# Instaladores de Alforja (ahora solo Windows; macOS y Linux están comentados abajo).
 # Se lanza al subir una etiqueta de versión:  git tag v0.1.0 && git push origin v0.1.0
 # Deja un borrador de release en GitHub con los instaladores; publícalo a mano.
 # Sin firmar: Windows (SmartScreen) y macOS (Gatekeeper) avisarán la primera vez.
@@ -20,12 +20,14 @@ jobs:
         include:
           - platform: windows-latest
             args: ""
-          - platform: macos-latest
-            args: "--target aarch64-apple-darwin"
-          - platform: macos-latest
-            args: "--target x86_64-apple-darwin"
-          - platform: ubuntu-22.04
-            args: ""
+          # Para macOS y Linux, quita el "#" de estas líneas. En un repositorio
+          # privado, los minutos de macOS gastan bastante más cuota de Actions.
+          # - platform: macos-latest
+          #   args: "--target aarch64-apple-darwin"
+          # - platform: macos-latest
+          #   args: "--target x86_64-apple-darwin"
+          # - platform: ubuntu-22.04
+          #   args: ""
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
