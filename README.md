@@ -11,8 +11,10 @@ y ffmpeg. Uso personal.
 ## Instalar
 
 Los instaladores salen de GitHub Actions (`.github/workflows/release.yml`) al
-subir una etiqueta de versión (`git tag v0.1.0 && git push origin v0.1.0`):
-quedan en un borrador de release. No están firmados, así que la primera vez:
+subir a la rama `release` (`git push origin main:release`), al subir una etiqueta
+`v*` o a mano desde la pestaña Actions. Quedan en un borrador de release, en la
+pestaña Releases. Ahora solo se compila el de Windows (los demás están comentados
+en el flujo). No están firmados, así que la primera vez:
 
 | sistema | instalador | primera vez |
 | --- | --- | --- |

@@ -1,11 +1,14 @@
 # Instaladores de Alforja (ahora solo Windows; macOS y Linux están comentados abajo).
-# Se lanza al subir una etiqueta de versión:  git tag v0.1.0 && git push origin v0.1.0
+# Se lanza al subir a la rama "release" (git push origin main:release), al subir
+# una etiqueta v* o a mano desde la pestaña Actions. La etiqueta del release sale
+# de la versión de la app (src-tauri/tauri.conf.json): v0.1.0.
 # Deja un borrador de release en GitHub con los instaladores; publícalo a mano.
 # Sin firmar: Windows (SmartScreen) y macOS (Gatekeeper) avisarán la primera vez.
 name: release
 
 on:
   push:
+    branches: ["release"]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -57,8 +60,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Alforja ${{ github.ref_name }}"
+          tagName: v__VERSION__
+          releaseName: "Alforja v__VERSION__"
           releaseBody: "Instaladores sin firmar. Lee el README para el primer arranque."
           releaseDraft: true
           prerelease: false
